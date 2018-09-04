@@ -81,6 +81,12 @@ impl RegisterFile {
             x: [0; 32]
         }
     }
+    fn dump(&self) {
+        println!("pc = 0x{:x}", self.pc);
+        for (idx, x) in self.x.iter().enumerate() {
+            println!("x[{:2?}] = 0x{:016x}", idx, x);
+        }
+    }
 }
 
 fn u8x4_to_u32(x0:u8, x1:u8, x2:u8, x3:u8) -> u32 {
@@ -142,13 +148,6 @@ fn get_funct7(inst: u32) -> u32 {
 
 fn fetch(map: &memmap::Mmap, pc: usize) -> u32 {
     u8x4_to_u32(map[pc+0], map[pc+1], map[pc+2], map[pc+3])
-}
-
-fn dump_reg(reg: &RegisterFile) {
-    println!("pc = 0x{:x}", reg.pc);
-    for (idx, x) in reg.x.iter().enumerate() {
-        println!("x[{:2?}] = 0x{:016x}", idx, x);
-    }
 }
 
 fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32) {
@@ -611,7 +610,7 @@ fn main() {
         reg.pc += 4;
 
         if args.verbose {
-            dump_reg(&reg);
+            reg.dump();
         }
     }
 }
