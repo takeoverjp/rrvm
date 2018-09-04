@@ -60,7 +60,7 @@ const LONG_OP_GE_80 : u32 = 0b11_111;
 #[derive(Debug)]
 struct Args {
     prog: String,
-    verbose: bool,
+    log_level: String,
     memory: usize,
 }
 
@@ -253,7 +253,7 @@ fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32) {
                           file!(), line!(), funct3)
         }
     }
-    info!("load from 0x{:016x}, val = 0x{:016x}", addr, reg.x[rd]);
+    debug!("load from 0x{:016x}, val = 0x{:016x}", addr, reg.x[rd]);
 }
 
 fn handle_load_fp(_reg: &RegisterFile, _inst: u32) {
@@ -377,7 +377,7 @@ fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32) {
     let offset = sign_ext(imm, 12);
     let addr   = (reg.x[rs1] as i64 + offset) as u64;
 
-    info!("store {} to 0x{:016x}", reg.x[rs2], addr);
+    debug!("store {} to 0x{:016x}", reg.x[rs2], addr);
     if mmio_region(addr) {
         mmio_store(addr, reg.x[rs2]);
     } else {
@@ -603,7 +603,7 @@ fn handle_branch(reg: &mut RegisterFile, inst: u32) {
 
     if jump {
         reg.pc = ((reg.pc as i64) + offset) as u64;
-        info!("branch to 0x{:016x}", reg.pc);
+        debug!("branch to 0x{:016x}", reg.pc);
         reg.pc -= 4; // increment after the handler.
     } else {
         debug!("not branch");
@@ -621,7 +621,7 @@ fn handle_jalr(reg: &mut RegisterFile, inst: u32) {
     }
     reg.pc = (reg.x[rs1] as i64 + offset) as u64;
     info!("jalr {},{}({})", ABI_NAME[rd], offset, ABI_NAME[rs1]);
-    info!("jump and link register to 0x{:016x}", reg.pc);
+    debug!("jump and link register to 0x{:016x}", reg.pc);
     reg.pc -= 4; // increment after the handler.
 }
 
@@ -638,7 +638,7 @@ fn handle_jal(reg: &mut RegisterFile, inst: u32) {
     }
     reg.pc = (reg.pc as i64 + offset) as u64;
     info!("jal {},{:x}", ABI_NAME[rd], reg.pc);
-    info!("jump to 0x{:016x}", reg.pc);
+    debug!("jump to 0x{:016x}", reg.pc);
     reg.pc -= 4; // increment after the handler.
 }
 
@@ -701,7 +701,10 @@ fn parse_args() -> Args {
     opts.optopt("m", "memory",
                 "Specify the amount of memory (default: 128 MB).",
                 "MEMORY");
-    opts.optflag("v", "verbose", "print verbose log");
+    opts.optopt("l", "log-level",
+                "Specify the log level.
+                 Ex: 'error' > 'warn' > 'info' > 'debug' > 'trace'",
+                "LEVEL");
     opts.optflag("h", "help", "print this help menu");
 
     let matches = opts.parse(&args[1..])
@@ -711,6 +714,11 @@ fn parse_args() -> Args {
         || matches.free.is_empty() {
         print_usage(&program, &opts);
     }
+
+    let log_level = match matches.opt_str("l") {
+        Some(value) => value,
+        None => String::from("warn")
+    };
 
     let memory = match matches.opt_get::<usize>("m") {
         Ok(result) => match result {
@@ -725,18 +733,23 @@ fn parse_args() -> Args {
 
     Args {
         prog: matches.free[0].clone(),
-        verbose: matches.opt_present("v"),
+        log_level: log_level,
         memory: memory,
     }
 }
 
 fn main() {
-    env_logger::init();
-
     let args = parse_args();
     debug!("{:?}", args);
+
+    let env = env_logger::Env::default()
+        .filter_or(env_logger::DEFAULT_FILTER_ENV, args.log_level);
+    env_logger::Builder::from_env(env)
+        .default_format_timestamp(false)
+        .init();
+
     let mut reg = RegisterFile::new();
-    let map = get_memmap(args.prog.as_str());
+    let map = get_memmap(&args.prog);
     let mut mem = map.to_vec();
     unsafe {
         mem.set_len(args.memory);
@@ -744,7 +757,7 @@ fn main() {
 
     loop {
         let inst : u32 = fetch(&map, reg.pc as usize);
-        info!("{:016x}: 0x{:08x} 0b{:032b} ", reg.pc, inst, inst);
+        info!("{:08x}: 0x{:08x}", reg.pc, inst);
 
         let opcode = get_opcode(inst);
         match opcode {
@@ -783,9 +796,7 @@ fn main() {
 
         reg.pc += 4;
 
-        if args.verbose {
-            reg.dump();
-        }
+        reg.dump();
     }
 }
 
