@@ -283,30 +283,31 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
-    let imm12  = get_imm12(inst);
+    let imm  = get_imm12(inst) as u64;
+    let simm = sign_ext(imm, 12);
     let shamt  = get_rs2(inst) as u8;
     let funct7 = get_funct7(inst);
 
     match funct3 {
         FUNCT3_ADDI      => {
-            info!("addi {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
-            reg.x[rd] = reg.x[rs1] + (imm12 as u64);
+            info!("addi {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
+            reg.x[rd] = ((reg.x[rs1] as i64) + simm) as u64;
         },
         FUNCT3_SLLI      => {
             info!("slli {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], shamt);
             reg.x[rd] = reg.x[rs1] << shamt;
         },
         FUNCT3_SLTI      => {
-            info!("slti {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
-            reg.x[rd] = ((reg.x[rs1] as i64) < (imm12 as i64)) as u64;
+            info!("slti {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
+            reg.x[rd] = ((reg.x[rs1] as i64) < (simm as i64)) as u64;
         },
         FUNCT3_SLTIU     => {
-            info!("sltiu {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
-            reg.x[rd] = (reg.x[rs1] < (imm12 as u64)) as u64;
+            info!("sltiu {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm as u64);
+            reg.x[rd] = (reg.x[rs1] < (simm as u64)) as u64;
         },
         FUNCT3_XORI      => {
-            info!("xori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
-            reg.x[rd] = reg.x[rs1] ^ (imm12 as u64)
+            info!("xori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
+            reg.x[rd] = reg.x[rs1] ^ (simm as u64)
         }
         FUNCT3_SRLI_SRAI => match funct7 {
             FUNCT7_SRLI  => {
@@ -324,12 +325,12 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
                           file!(), line!(), funct7)
         }
         FUNCT3_ORI       => {
-            info!("ori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
-            reg.x[rd] = reg.x[rs1] | (imm12 as u64);
+            info!("ori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
+            reg.x[rd] = reg.x[rs1] | (simm as u64);
         },
         FUNCT3_ANDI      => {
-            info!("andi {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
-            reg.x[rd] = reg.x[rs1] & (imm12 as u64);
+            info!("andi {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
+            reg.x[rd] = reg.x[rs1] & (simm as u64);
         },
         _ => warn!("{}: {}: unknown funct3 0x{:x}",
                       file!(), line!(), funct3)
@@ -452,23 +453,53 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
 
     match funct3 {
         FUNCT3_ADD_SUB => match funct7 {
-            FUNCT7_ADD => reg.x[rd] = reg.x[rs1] + reg.x[rs2],
-            FUNCT7_SUB => reg.x[rd] = reg.x[rs1] - reg.x[rs2],
+            FUNCT7_ADD => {
+                info!("add {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+                reg.x[rd] = reg.x[rs1] + reg.x[rs2];
+            },
+            FUNCT7_SUB => {
+                info!("sub {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+                reg.x[rd] = reg.x[rs1] - reg.x[rs2];
+            },
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         },
-        FUNCT3_SLL     => reg.x[rd] = reg.x[rs1] << reg.x[rs2],
-        FUNCT3_SLT     => reg.x[rd] = ((reg.x[rs1] as i64) < (reg.x[rs2] as i64)) as u64,
-        FUNCT3_SLTU    => reg.x[rd] = (reg.x[rs1] < reg.x[rs2]) as u64,
-        FUNCT3_XOR     => reg.x[rd] = reg.x[rs1] - reg.x[rs2],
+        FUNCT3_SLL     => {
+            info!("sll {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            reg.x[rd] = reg.x[rs1] << reg.x[rs2];
+        },
+        FUNCT3_SLT     => {
+            info!("slt {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            reg.x[rd] = ((reg.x[rs1] as i64) < (reg.x[rs2] as i64)) as u64;
+        },
+        FUNCT3_SLTU    => {
+            info!("slu {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            reg.x[rd] = (reg.x[rs1] < reg.x[rs2]) as u64;
+        },
+        FUNCT3_XOR     => {
+            info!("xor {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            reg.x[rd] = reg.x[rs1] - reg.x[rs2];
+        },
         FUNCT3_SRL_SRA => match funct7 {
-            FUNCT7_SRL => reg.x[rd] = reg.x[rs1] - reg.x[rs2],
-            FUNCT7_SRA => reg.x[rd] = reg.x[rs1] - reg.x[rs2], // TODO
+            FUNCT7_SRL => {
+                info!("srl {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+                reg.x[rd] = reg.x[rs1] - reg.x[rs2];
+            },
+            FUNCT7_SRA => {
+                info!("sra {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+                reg.x[rd] = reg.x[rs1] - reg.x[rs2]; // TODO
+            },
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         },
-        FUNCT3_OR      => reg.x[rd] = reg.x[rs1] | reg.x[rs2],
-        FUNCT3_AND     => reg.x[rd] = reg.x[rs1] & reg.x[rs2],
+        FUNCT3_OR      => {
+            info!("or {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            reg.x[rd] = reg.x[rs1] | reg.x[rs2];
+        },
+        FUNCT3_AND     => {
+            info!("and {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            reg.x[rd] = reg.x[rs1] & reg.x[rs2];
+        },
         _ => warn!("{}: {}: unknown funct3 0x{:x}",
                       file!(), line!(), funct3)
     }
@@ -476,6 +507,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
 
 fn handle_lui(reg: &mut RegisterFile, inst: u32) {
     let rd  = get_rd(inst) as usize;
+    info!("lui {},0x{:x}", ABI_NAME[rd], inst >> 12);
 
     reg.x[rd] = (inst & 0b11111111_11111111_11110000_00000000) as u64
 }
@@ -601,7 +633,7 @@ fn handle_jal(reg: &mut RegisterFile, inst: u32) {
 
     reg.x[rd] = reg.pc + 4;
     reg.pc = (reg.pc as i64 + offset) as u64;
-    info!("jal {},{}", ABI_NAME[rd], offset);
+    info!("jal {},{:x}", ABI_NAME[rd], reg.pc);
     info!("jump to 0x{:016x}", reg.pc);
     reg.pc -= 4; // increment after the handler.
 }
