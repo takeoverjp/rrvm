@@ -616,7 +616,9 @@ fn handle_jalr(reg: &mut RegisterFile, inst: u32) {
     let imm  = get_imm12(inst) as u64;
     let offset: i64 = sign_ext(imm, 12);
 
-    reg.x[rd] = reg.pc + 4;
+    if rd != 0 {
+        reg.x[rd] = reg.pc + 4;
+    }
     reg.pc = (reg.x[rs1] as i64 + offset) as u64;
     info!("jalr {},{}({})", ABI_NAME[rd], offset, ABI_NAME[rs1]);
     info!("jump and link register to 0x{:016x}", reg.pc);
@@ -631,7 +633,9 @@ fn handle_jal(reg: &mut RegisterFile, inst: u32) {
     let rd = get_rd(inst) as usize;
     let offset: i64 = sign_ext(imm, 20);
 
-    reg.x[rd] = reg.pc + 4;
+    if rd != 0 {
+        reg.x[rd] = reg.pc + 4;
+    }
     reg.pc = (reg.pc as i64 + offset) as u64;
     info!("jal {},{:x}", ABI_NAME[rd], reg.pc);
     info!("jump to 0x{:016x}", reg.pc);
