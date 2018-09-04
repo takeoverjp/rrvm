@@ -71,6 +71,18 @@ struct RegisterFile {
     x : [u64; 32]
 }
 
+impl RegisterFile {
+    fn new() -> RegisterFile {
+        RegisterFile {
+            csr: ControlStatusRegister {
+                mepc : 0
+            },
+            pc: 0,
+            x: [0; 32]
+        }
+    }
+}
+
 fn u8x4_to_u32(x0:u8, x1:u8, x2:u8, x3:u8) -> u32 {
     return (x0 as u32)
         | ((x1 as u32) << 8)
@@ -214,12 +226,17 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_XORI      => reg.x[rd] = reg.x[rs1] ^ (imm12 as u64),
         FUNCT3_SRLI_SRAI => match funct7 {
             FUNCT7_SRLI  => reg.x[rd] = reg.x[rs1] >> shamt,
-            FUNCT7_SRAI  => reg.x[rd] = reg.x[rs1] >> shamt, // TODO
+            FUNCT7_SRAI  => {
+                reg.x[rd] = reg.x[rs1] >> shamt;
+                if (reg.x[rs1] & (1 << 63)) != 0 {
+                    reg.x[rd] |= ((1 << shamt) - 1) << (64 - shamt);
+                }
+            },
             _ => println!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         }
-        FUNCT3_ORI       => reg.x[rd] = reg.x[rs1] + (imm12 as u64),
-        FUNCT3_ANDI      => reg.x[rd] = reg.x[rs1] + (imm12 as u64),
+        FUNCT3_ORI       => reg.x[rd] = reg.x[rs1] | (imm12 as u64),
+        FUNCT3_ANDI      => reg.x[rd] = reg.x[rs1] & (imm12 as u64),
         _ => println!("{}: {}: unknown funct3 0x{:x}",
                       file!(), line!(), funct3)
     }
@@ -545,19 +562,12 @@ fn parse_args() -> Args {
 fn main() {
     let args = parse_args();
     if args.verbose { println!("{:?}", args); }
+    let mut reg = RegisterFile::new();
     let map = get_memmap(args.prog.as_str());
     let mut mem = map.to_vec();
     unsafe {
         mem.set_len(args.memory);
     }
-
-    let mut reg = RegisterFile {
-        csr: ControlStatusRegister {
-            mepc : 0
-        },
-        pc: 0,
-        x: [0; 32]
-    };
 
     loop {
         let inst : u32 = fetch(&map, reg.pc as usize);
@@ -603,5 +613,118 @@ fn main() {
         if args.verbose {
             dump_reg(&reg);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_addi() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b000000000111_00001_000_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b001;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0b1000, reg.x[2]);
+    }
+
+    #[test]
+    fn test_slli() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b000000000111_00001_001_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b001;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0b10000000, reg.x[2]);
+    }
+
+    #[test]
+    fn test_slti() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b000000000111_00001_010_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b111;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0, reg.x[2]);
+
+        reg.x[1] = 0b110;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(1, reg.x[2]);
+
+        reg.x[1] = 0xffff_ffff_ffff_ffff;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(1, reg.x[2]);
+    }
+
+    #[test]
+    fn test_sltiu() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b000000000111_00001_011_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b111;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(reg.x[2], 0);
+
+        reg.x[1] = 0b110;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(reg.x[2], 1);
+
+        reg.x[1] = 0xffff_ffff_ffff_ffff;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0, reg.x[2]);
+    }
+
+    #[test]
+    fn test_xori() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b101010101010_00001_100_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b111111111111;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0b010101010101, reg.x[2]);
+    }
+
+    #[test]
+    fn test_srli() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b0000000_00100_00001_101_00010_0010011;
+        //                  imm   shamt  rs1 funct3 rsd   opcode
+        reg.x[1] = 0xffff_ffff_ffff_ffff;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0x0fff_ffff_ffff_ffff, reg.x[2],
+                   "0x{:016x}", reg.x[2]);
+    }
+
+    #[test]
+    fn test_srai() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b0100000_00100_00001_101_00010_0010011;
+        //                  imm   shamt  rs1 funct3 rsd   opcode
+        reg.x[1] = 0xffff_ffff_ffff_ffff;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0xffff_ffff_ffff_ffff, reg.x[2],
+                   "0x{:016x}", reg.x[2]);
+    }
+
+    #[test]
+    fn test_ori() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b101010101010_00001_110_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b010111000000;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0b111111101010, reg.x[2]);
+    }
+
+    #[test]
+    fn test_andi() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b101010101010_00001_111_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b010101111111;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0b000000101010, reg.x[2]);
     }
 }
