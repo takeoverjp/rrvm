@@ -5,7 +5,13 @@ $ cargo build
 ```
 
 
-# Howto test
+# Howto unit test
+
+```
+$ cargo test
+```
+
+# Howto integration test
 
 ```
 $ make -C test
