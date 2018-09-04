@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 extern crate getopts;
 extern crate memmap;
 
@@ -65,6 +68,12 @@ struct ControlStatusRegister {
     mepc : u64
 }
 
+static ABI_NAME: [&'static str; 32] = [
+    "zero", "ra", "sp", "gp", "tp", "t0","t1","t2",
+    "s0/fp", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+    "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"];
+
 struct RegisterFile {
     csr : ControlStatusRegister,
     pc : u64,
@@ -82,9 +91,9 @@ impl RegisterFile {
         }
     }
     fn dump(&self) {
-        println!("pc = 0x{:x}", self.pc);
+        trace!("pc = 0x{:x}", self.pc);
         for (idx, x) in self.x.iter().enumerate() {
-            println!("x[{:2?}] = 0x{:016x}", idx, x);
+            trace!("x[{:2?}] = 0x{:016x}", idx, x);
         }
     }
 }
@@ -100,7 +109,7 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
     let file = match File::open(file_path) {
         Ok(file) => file,
         Err(e) => {
-            println!("file({}) open error {:?}", file_path, e);
+            error!("file({}) open error {:?}", file_path, e);
             std::process::exit(-1);
         }
     };
@@ -109,7 +118,7 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
         match MmapOptions::new().map(&file) {
             Ok(map) => map,
             Err(e) => {
-                println!("memmap error {:?}", e);
+                error!("memmap error {:?}", e);
                 std::process::exit(-1);
             }
         }
@@ -180,41 +189,83 @@ fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32) {
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
-    let imm12  = get_imm12(inst);
-    let addr   = (reg.x[rs1] as i64 + sign_ext(imm12 as u64, 12)) as u64;
-    println!("0x{:016x}, 0x{:016x}, 0x{:016x}", reg.x[rs1], imm12, addr);
+    let imm  = get_imm12(inst);
+    let offset = sign_ext(imm as u64, 12);
+    let addr   = (reg.x[rs1] as i64 + offset) as u64;
 
     if mmio_region(addr) {
-        println!("{}: {}: Not implemented", file!(), line!());
+        warn!("{}: {}: Not implemented", file!(), line!());
     } else {
         let addr = addr as usize;
-        reg.x[rd] = map[addr] as u64;
+        match funct3 {
+            FUNCT3_LB  => {
+                info!("lb {},{}({})",
+                      ABI_NAME[rd], offset, ABI_NAME[rs1]);
+                reg.x[rd] = map[addr] as u64;
+                reg.x[rd] = sign_ext(reg.x[rd], 8) as u64;
+            },
+            FUNCT3_LH  => {
+                info!("lh {},{}({})",
+                      ABI_NAME[rd], offset, ABI_NAME[rs1]);
+                reg.x[rd] = (map[addr] as u64)
+                    | ((map[addr+1] as u64) << 8);
+                reg.x[rd] = sign_ext(reg.x[rd], 16) as u64;
+            },
+            FUNCT3_LW  => {
+                info!("lw {},{}({})",
+                      ABI_NAME[rd], offset, ABI_NAME[rs1]);
+                reg.x[rd] = (map[addr] as u64)
+                    | ((map[addr+1] as u64) << 8)
+                    | ((map[addr+2] as u64) << 16)
+                    | ((map[addr+3] as u64) << 24);
+                reg.x[rd] = sign_ext(reg.x[rd], 32) as u64;
+            },
+            FUNCT3_LD  => {
+                info!("ld {},{}({})",
+                      ABI_NAME[rd], offset, ABI_NAME[rs1]);
+                reg.x[rd] = (map[addr] as u64)
+                    | ((map[addr+1] as u64) << 8)
+                    | ((map[addr+2] as u64) << 16)
+                    | ((map[addr+3] as u64) << 24)
+                    | ((map[addr+4] as u64) << 32)
+                    | ((map[addr+5] as u64) << 40)
+                    | ((map[addr+6] as u64) << 48)
+                    | ((map[addr+7] as u64) << 56);
+            },
+            FUNCT3_LBU => {
+                info!("lbu {},{}({})",
+                      ABI_NAME[rd], offset, ABI_NAME[rs1]);
+                reg.x[rd] = map[addr] as u64;
+            },
+            FUNCT3_LHU => {
+                reg.x[rd] = (map[addr] as u64)
+                    | ((map[addr+1] as u64) << 8);
+            },
+            FUNCT3_LWU => {
+                info!("lwu {},{}({})",
+                      ABI_NAME[rd], offset, ABI_NAME[rs1]);
+                reg.x[rd] = (map[addr] as u64)
+                    | ((map[addr+1] as u64) << 8)
+                    | ((map[addr+2] as u64) << 16)
+                    | ((map[addr+3] as u64) << 24);
+            },
+            _ => warn!("{}: {}: unknown funct3 0x{:x}",
+                          file!(), line!(), funct3)
+        }
     }
-    println!("load from 0x{:016x}, val = 0x{:016x}", addr, reg.x[rd]);
-
-    match funct3 {
-        FUNCT3_LB  => println!("Load byte"),
-        FUNCT3_LH  => println!("Load half word"),
-        FUNCT3_LW  => println!("Load word"),
-        FUNCT3_LD  => println!("Load double word"),
-        FUNCT3_LBU => println!("Load unsigned byte"),
-        FUNCT3_LHU => println!("Load unsigned half word"),
-        FUNCT3_LWU => println!("Load unsigned word"),
-        _ => println!("{}: {}: unknown funct3 0x{:x}",
-                      file!(), line!(), funct3)
-    }
+    info!("load from 0x{:016x}, val = 0x{:016x}", addr, reg.x[rd]);
 }
 
 fn handle_load_fp(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_custom_0(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_misc_mem(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
@@ -237,23 +288,50 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
     let funct7 = get_funct7(inst);
 
     match funct3 {
-        FUNCT3_ADDI      => reg.x[rd] = reg.x[rs1] + (imm12 as u64),
-        FUNCT3_SLLI      => reg.x[rd] = reg.x[rs1] << shamt,
-        FUNCT3_SLTI      => reg.x[rd] = ((reg.x[rs1] as i64) < (imm12 as i64)) as u64,
-        FUNCT3_SLTIU     => reg.x[rd] = (reg.x[rs1] < (imm12 as u64)) as u64,
-        FUNCT3_XORI      => reg.x[rd] = reg.x[rs1] ^ (imm12 as u64),
+        FUNCT3_ADDI      => {
+            info!("addi {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
+            reg.x[rd] = reg.x[rs1] + (imm12 as u64);
+        },
+        FUNCT3_SLLI      => {
+            info!("slli {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], shamt);
+            reg.x[rd] = reg.x[rs1] << shamt;
+        },
+        FUNCT3_SLTI      => {
+            info!("slti {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
+            reg.x[rd] = ((reg.x[rs1] as i64) < (imm12 as i64)) as u64;
+        },
+        FUNCT3_SLTIU     => {
+            info!("sltiu {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
+            reg.x[rd] = (reg.x[rs1] < (imm12 as u64)) as u64;
+        },
+        FUNCT3_XORI      => {
+            info!("xori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
+            reg.x[rd] = reg.x[rs1] ^ (imm12 as u64)
+        }
         FUNCT3_SRLI_SRAI => match funct7 {
-            FUNCT7_SRLI  => reg.x[rd] = reg.x[rs1] >> shamt,
+            FUNCT7_SRLI  => {
+                info!("srli {},{},{}",
+                      ABI_NAME[rd], ABI_NAME[rs1], shamt);
+                reg.x[rd] = reg.x[rs1] >> shamt;
+            },
             FUNCT7_SRAI  => {
+                info!("srai {},{},{}",
+                      ABI_NAME[rd], ABI_NAME[rs1], shamt);
                 reg.x[rd] = reg.x[rs1] >> shamt;
                 reg.x[rd] = sign_ext(reg.x[rd], 64-shamt) as u64;
             },
-            _ => println!("{}: {}: unknown funct7 0x{:x}",
+            _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         }
-        FUNCT3_ORI       => reg.x[rd] = reg.x[rs1] | (imm12 as u64),
-        FUNCT3_ANDI      => reg.x[rd] = reg.x[rs1] & (imm12 as u64),
-        _ => println!("{}: {}: unknown funct3 0x{:x}",
+        FUNCT3_ORI       => {
+            info!("ori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
+            reg.x[rd] = reg.x[rs1] | (imm12 as u64);
+        },
+        FUNCT3_ANDI      => {
+            info!("andi {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], imm12);
+            reg.x[rd] = reg.x[rs1] & (imm12 as u64);
+        },
+        _ => warn!("{}: {}: unknown funct3 0x{:x}",
                       file!(), line!(), funct3)
     }
 }
@@ -261,15 +339,16 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
 fn handle_auipc(reg: &mut RegisterFile, inst: u32) {
     let rd  = get_rd(inst) as usize;
 
+    info!("auipc {},{}", ABI_NAME[rd], inst >> 12);
     reg.x[rd] = reg.pc + (inst & 0b11111111_11111111_11110000_00000000) as u64
 }
 
 fn handle_op_imm_32(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_long_op_48(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn mmio_region(addr: u64) -> bool {
@@ -293,36 +372,62 @@ fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32) {
     let funct3 = get_funct3(inst);
     let rs1    = get_rs1(inst) as usize;
     let rs2    = get_rs2(inst) as usize;
-    let imm12   = (get_funct7(inst) << 5) + get_rd(inst);
-    let addr   = reg.x[rs1] + imm12 as u64;
+    let imm   = ((get_funct7(inst) << 5) + get_rd(inst)) as u64;
+    let offset = sign_ext(imm, 12);
+    let addr   = (reg.x[rs1] as i64 + offset) as u64;
 
-    println!("store {} to 0x{:016x}", reg.x[rs2], addr);
+    info!("store {} to 0x{:016x}", reg.x[rs2], addr);
     if mmio_region(addr) {
         mmio_store(addr, reg.x[rs2]);
     } else {
-        map[addr as usize] = reg.x[rs2] as u8; // TODO size
-    }
-
-    match funct3 {
-        FUNCT3_SB => println!("Store byte"),
-        FUNCT3_SH => println!("Store half word"),
-        FUNCT3_SW => println!("Store word"),
-        FUNCT3_SD => println!("Store double word"),
-        _ => println!("{}: {}: unknown funct3 0x{:x}",
-                      file!(), line!(), funct3)
+        match funct3 {
+            FUNCT3_SB => {
+                info!("sb {},{}({})",
+                      ABI_NAME[rs2], offset, ABI_NAME[rs1]);
+                map[addr as usize] = reg.x[rs2] as u8;
+            },
+            FUNCT3_SH => {
+                info!("sh {},{}({})",
+                      ABI_NAME[rs2], offset, ABI_NAME[rs1]);
+                map[addr as usize] = (reg.x[rs2] & 0xff) as u8;
+                map[(addr+1) as usize] = (reg.x[rs2] >> 8 & 0xff) as u8;
+            },
+            FUNCT3_SW => {
+                info!("sw {},{}({})",
+                      ABI_NAME[rs2], offset, ABI_NAME[rs1]);
+                map[addr as usize] = (reg.x[rs2] & 0xff) as u8;
+                map[(addr+1) as usize] = (reg.x[rs2] >> 8 & 0xff) as u8;
+                map[(addr+2) as usize] = (reg.x[rs2] >> 16 & 0xff) as u8;
+                map[(addr+3) as usize] = (reg.x[rs2] >> 24 & 0xff) as u8;
+            },
+            FUNCT3_SD => {
+                info!("sd {},{}({})",
+                      ABI_NAME[rs2], offset, ABI_NAME[rs1]);
+                map[addr as usize] = (reg.x[rs2] & 0xff) as u8;
+                map[(addr+1) as usize] = (reg.x[rs2] >> 8 & 0xff) as u8;
+                map[(addr+2) as usize] = (reg.x[rs2] >> 16 & 0xff) as u8;
+                map[(addr+3) as usize] = (reg.x[rs2] >> 24 & 0xff) as u8;
+                map[(addr+4) as usize] = (reg.x[rs2] >> 32 & 0xff) as u8;
+                map[(addr+5) as usize] = (reg.x[rs2] >> 40 & 0xff) as u8;
+                map[(addr+6) as usize] = (reg.x[rs2] >> 48 & 0xff) as u8;
+                map[(addr+7) as usize] = (reg.x[rs2] >> 56 & 0xff) as u8;
+            },
+            _ => warn!("{}: {}: unknown funct3 0x{:x}",
+                          file!(), line!(), funct3)
+        }
     }
 }
 
 fn handle_store_fp(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_custom_1(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_amo(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_op(reg: &mut RegisterFile, inst: u32) {
@@ -349,7 +454,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_ADD_SUB => match funct7 {
             FUNCT7_ADD => reg.x[rd] = reg.x[rs1] + reg.x[rs2],
             FUNCT7_SUB => reg.x[rd] = reg.x[rs1] - reg.x[rs2],
-            _ => println!("{}: {}: unknown funct7 0x{:x}",
+            _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         },
         FUNCT3_SLL     => reg.x[rd] = reg.x[rs1] << reg.x[rs2],
@@ -359,12 +464,12 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_SRL_SRA => match funct7 {
             FUNCT7_SRL => reg.x[rd] = reg.x[rs1] - reg.x[rs2],
             FUNCT7_SRA => reg.x[rd] = reg.x[rs1] - reg.x[rs2], // TODO
-            _ => println!("{}: {}: unknown funct7 0x{:x}",
+            _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         },
         FUNCT3_OR      => reg.x[rd] = reg.x[rs1] | reg.x[rs2],
         FUNCT3_AND     => reg.x[rd] = reg.x[rs1] & reg.x[rs2],
-        _ => println!("{}: {}: unknown funct3 0x{:x}",
+        _ => warn!("{}: {}: unknown funct3 0x{:x}",
                       file!(), line!(), funct3)
     }
 }
@@ -376,39 +481,39 @@ fn handle_lui(reg: &mut RegisterFile, inst: u32) {
 }
 
 fn handle_op_32(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_long_op_64(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_madd(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_msub(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_nmsub(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_nmadd(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_op_fp(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_custom2(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_long_op_48_2(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_branch(reg: &mut RegisterFile, inst: u32) {
@@ -430,38 +535,59 @@ fn handle_branch(reg: &mut RegisterFile, inst: u32) {
 
     let mut jump = false;
     match funct3 {
-        FUNCT3_BEQ  => jump = reg.x[rs1] == reg.x[rs2],
-        FUNCT3_BNE  => jump = reg.x[rs1] != reg.x[rs2],
-        FUNCT3_BLT  => jump = reg.x[rs1] < reg.x[rs2], // TODO : sign
-        FUNCT3_BGE  => jump = reg.x[rs1] >= reg.x[rs2], // TODO : sign
-        FUNCT3_BLTU => jump = reg.x[rs1] < reg.x[rs2],
-        FUNCT3_BGEU => jump = reg.x[rs1] >= reg.x[rs2],
-        _ => println!("{}: {}: unknown funct3 0x{:x}",
+        FUNCT3_BEQ  => {
+            info!("beq {},{},{}",
+                  ABI_NAME[rs1], ABI_NAME[rs2], offset);
+            jump = reg.x[rs1] == reg.x[rs2];
+        },
+        FUNCT3_BNE  => {
+            info!("bne {},{},{}",
+                  ABI_NAME[rs1], ABI_NAME[rs2], offset);
+            jump = reg.x[rs1] != reg.x[rs2];
+        },
+        FUNCT3_BLT  => {
+            info!("blt {},{},{}",
+                  ABI_NAME[rs1], ABI_NAME[rs2], offset);
+            jump = reg.x[rs1] < reg.x[rs2]; // TODO : sign
+        },
+        FUNCT3_BGE  => {
+            info!("bge {},{},{}",
+                  ABI_NAME[rs1], ABI_NAME[rs2], offset);
+            jump = reg.x[rs1] >= reg.x[rs2]; // TODO : sign
+        },
+        FUNCT3_BLTU => {
+            info!("bltu {},{},{}",
+                  ABI_NAME[rs1], ABI_NAME[rs2], offset);
+            jump = reg.x[rs1] < reg.x[rs2];
+        },
+        FUNCT3_BGEU => {
+            info!("bgeu {},{},{}",
+                  ABI_NAME[rs1], ABI_NAME[rs2], offset);
+            jump = reg.x[rs1] >= reg.x[rs2];
+        },
+        _ => warn!("{}: {}: unknown funct3 0x{:x}",
                       file!(), line!(), funct3)
     }
 
     if jump {
         reg.pc = ((reg.pc as i64) + offset) as u64;
-        println!("branch to 0x{:016x}", reg.pc);
+        info!("branch to 0x{:016x}", reg.pc);
         reg.pc -= 4; // increment after the handler.
     } else {
-        println!("not branch");
+        debug!("not branch");
     }
 }
 
 fn handle_jalr(reg: &mut RegisterFile, inst: u32) {
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
-    let imm12  = get_imm12(inst);
-    let offset: i64 = if ((inst >> 31) & 0b1) == 1 {
-        imm12 as i64 | (0xffff_ffff_ffff_f << 12)
-    } else {
-        imm12 as i64
-    };
+    let imm  = get_imm12(inst) as u64;
+    let offset: i64 = sign_ext(imm, 12);
 
     reg.x[rd] = reg.pc + 4;
     reg.pc = (reg.x[rs1] as i64 + offset) as u64;
-    println!("jump and link register to 0x{:016x}", reg.pc);
+    info!("jalr {},{}({})", ABI_NAME[rd], offset, ABI_NAME[rs1]);
+    info!("jump and link register to 0x{:016x}", reg.pc);
     reg.pc -= 4; // increment after the handler.
 }
 
@@ -475,7 +601,8 @@ fn handle_jal(reg: &mut RegisterFile, inst: u32) {
 
     reg.x[rd] = reg.pc + 4;
     reg.pc = (reg.pc as i64 + offset) as u64;
-    println!("jump to 0x{:016x}", reg.pc);
+    info!("jal {},{}", ABI_NAME[rd], offset);
+    info!("jump to 0x{:016x}", reg.pc);
     reg.pc -= 4; // increment after the handler.
 }
 
@@ -498,29 +625,29 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_ECALL_EBREAK => unimplemented!(),
         FUNCT3_CSRRW        => match csr {
             CSR_MEPC => {
+                info!("csrrw {},mepc,{}", ABI_NAME[rd], ABI_NAME[rs1]);
                 if rd != 0 {
                     reg.x[rd] = reg.csr.mepc;
                 }
                 reg.csr.mepc = reg.x[rs1];
-                println!("CSR_MEPC")
             },
-            _ => println!("{}: {}: unknown csr 0x{:x}", file!(), line!(), csr)
+            _ => warn!("{}: {}: unknown csr 0x{:x}", file!(), line!(), csr)
         },
         FUNCT3_CSRRS        => unimplemented!(),
         FUNCT3_CSRRC        => unimplemented!(),
         FUNCT3_CSRRWI       => unimplemented!(),
         FUNCT3_CSRRSI       => unimplemented!(),
         FUNCT3_CSRRCI       => unimplemented!(),
-        _ => println!("{}: {}: unknown funct3 0x{:x}", file!(), line!(), funct3)
+        _ => warn!("{}: {}: unknown funct3 0x{:x}", file!(), line!(), funct3)
     }
 }
 
 fn handle_custom3(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 fn handle_long_op_ge_80(_reg: &RegisterFile, _inst: u32) {
-    println!("{}: {}: Not implemented", file!(), line!());
+    warn!("{}: {}: Not implemented", file!(), line!());
 }
 
 
@@ -555,7 +682,7 @@ fn parse_args() -> Args {
             None => 128 * 1024 * 1024
         },
         Err(e) => {
-            println!("memmap error {:?}", e);
+            error!("memmap error {:?}", e);
             std::process::exit(-1);
         }
     };
@@ -568,8 +695,10 @@ fn parse_args() -> Args {
 }
 
 fn main() {
+    env_logger::init();
+
     let args = parse_args();
-    if args.verbose { println!("{:?}", args); }
+    debug!("{:?}", args);
     let mut reg = RegisterFile::new();
     let map = get_memmap(args.prog.as_str());
     let mut mem = map.to_vec();
@@ -579,7 +708,7 @@ fn main() {
 
     loop {
         let inst : u32 = fetch(&map, reg.pc as usize);
-        println!("{:016x}: 0x{:08x} 0b{:032b} ", reg.pc, inst, inst);
+        info!("{:016x}: 0x{:08x} 0b{:032b} ", reg.pc, inst, inst);
 
         let opcode = get_opcode(inst);
         match opcode {
@@ -612,7 +741,7 @@ fn main() {
             SYSTEM        => handle_system(&mut reg, inst),
             CUSTOM3       => handle_custom3(&mut reg, inst),
             LONG_OP_GE_80 => handle_long_op_ge_80(&mut reg, inst),
-            _ => println!("{}: {}: unknown opcode 0x{:x}",
+            _ => warn!("{}: {}: unknown opcode 0x{:x}",
                           file!(), line!(), opcode)
         }
 
