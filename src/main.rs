@@ -861,13 +861,25 @@ mod tests {
     }
 
     #[test]
-    fn test_xori() {
+    fn test_xori_pos() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b001010101010_00001_100_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b111111111111;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0b110101010101, reg.x[2],
+                   "0x{:016x}", reg.x[2]);
+    }
+
+    #[test]
+    fn test_xori_neg() {
         let mut reg = RegisterFile::new();
         let inst: u32 = 0b101010101010_00001_100_00010_0010011;
         //                  imm         rs1 funct3 rsd   opcode
         reg.x[1] = 0b111111111111;
         handle_op_imm(&mut reg, inst);
-        assert_eq!(0b010101010101, reg.x[2]);
+        assert_eq!(0xffff_ffff_ffff_f555, reg.x[2],
+                   "0x{:016x}", reg.x[2]);
     }
 
     #[test]
@@ -893,13 +905,25 @@ mod tests {
     }
 
     #[test]
-    fn test_ori() {
+    fn test_ori_pos() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b001010101010_00001_110_00010_0010011;
+        //                  imm         rs1 funct3 rsd   opcode
+        reg.x[1] = 0b010111000000;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(0b011111101010, reg.x[2],
+                   "0b{:b}", reg.x[2]);
+    }
+
+    #[test]
+    fn test_ori_neg() {
         let mut reg = RegisterFile::new();
         let inst: u32 = 0b101010101010_00001_110_00010_0010011;
         //                  imm         rs1 funct3 rsd   opcode
         reg.x[1] = 0b010111000000;
         handle_op_imm(&mut reg, inst);
-        assert_eq!(0b111111101010, reg.x[2]);
+        assert_eq!(0xffff_ffff_ffff_ffea, reg.x[2],
+                   "0x{:016x}", reg.x[2]);
     }
 
     #[test]
@@ -909,6 +933,6 @@ mod tests {
         //                  imm         rs1 funct3 rsd   opcode
         reg.x[1] = 0b010101111111;
         handle_op_imm(&mut reg, inst);
-        assert_eq!(0b000000101010, reg.x[2]);
+        assert_eq!(0b000000101010, reg.x[2], "{:b}", reg.x[2]);
     }
 }
