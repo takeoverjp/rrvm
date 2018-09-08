@@ -93,7 +93,7 @@ impl RegisterFile {
     fn dump(&self) {
         trace!("pc = 0x{:x}", self.pc);
         for (idx, x) in self.x.iter().enumerate() {
-            trace!("x[{:2?}] = 0x{:016x}", idx, x);
+            trace!("x[{:2?}]({:5}) = 0x{:016x}", idx, ABI_NAME[idx], x);
         }
     }
 }
