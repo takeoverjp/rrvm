@@ -815,6 +815,16 @@ mod tests {
     }
 
     #[test]
+    fn test_addi_neg() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b111111111100_00001_000_00010_0010011;
+        //                  imm(-4)     rs1 funct3 rsd   opcode
+        reg.x[1] = 0b001;
+        handle_op_imm(&mut reg, inst);
+        assert_eq!(-3i64 as u64, reg.x[2]);
+    }
+
+    #[test]
     fn test_slli() {
         let mut reg = RegisterFile::new();
         let inst: u32 = 0b000000000111_00001_001_00010_0010011;
