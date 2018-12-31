@@ -1,8 +1,8 @@
 CROSS_TARGET = riscv32-unknown-elf-
 CC = $(CROSS_TARGET)gcc
 LD = $(CROSS_TARGET)ld
-CFLAGS = -march=rv32im
-LDFLAGS = -L/opt/riscv32im/riscv32-unknown-elf/lib -Tlink.ld -nostartfiles -static 
+CFLAGS = -march=rv32g
+LDFLAGS = -L$(RISCV)/riscv32-unknown-elf/lib -Tlink.ld -nostartfiles -static
 
 LIBS = -lc
 OBJS = hello.o start.o
