@@ -805,6 +805,18 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_lh() {
+        // load harfword(32bit)
+        let mut reg = RegisterFile::new();
+        let inst: u32 = 0b000000000100_00001_001_00010_0000011;
+        //                  imm         rs1 funct3 rsd   opcode
+        let mem: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        reg.x[1] = 0x2;
+        handle_load(&mem, &mut reg, inst);
+        assert_eq!(0x0706, reg.x[2]);
+    }
+
+    #[test]
     fn test_addi() {
         let mut reg = RegisterFile::new();
         let inst: u32 = 0b000000000111_00001_000_00010_0010011;
