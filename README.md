@@ -11,6 +11,25 @@ $ cargo build
 $ cargo test
 ```
 
+# Howto regression test
+
+## Build and install riscv-tests
+
+```
+$ export RISCV=/opt/riscv/
+$ git clone --recursive https://github.com/riscv/riscv-tests
+$ mkdir -p riscv-tests/build
+$ cd riscv-tests/build
+$ ../configure --prefix=${RISCV}/target --with-xlen=32
+$ make
+$ make install
+```
+
+## Run integration test
+```
+$ export RISCV=/opt/riscv/
+$ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi
+```
 
 # Howto integration test
 
