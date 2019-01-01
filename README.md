@@ -1,3 +1,12 @@
+# Required environment variable
+
+- RISCV
+  - Riscv tool install path as the following:
+
+```
+$ export RISCV=/opt/riscv/
+```
+
 # Howto build
 
 ```
@@ -16,7 +25,6 @@ $ cargo test
 ## Build and install riscv-tests
 
 ```
-$ export RISCV=/opt/riscv/
 $ git clone --recursive https://github.com/riscv/riscv-tests
 $ mkdir -p riscv-tests/build
 $ cd riscv-tests/build
@@ -27,7 +35,6 @@ $ make install
 
 ## Run regression tests
 ```
-$ export RISCV=/opt/riscv/
 $ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi
 ```
 
@@ -37,7 +44,6 @@ $ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi
 
 - Cross compiler and standard libraries
 ```
-$ export RISCV=/opt/riscv/
 $ git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
 $ cd riscv-gnu-toolchain
 $ ./configure --prefix=${RISCV} --with-arch=rv32gc --with-abi=ilp32d
@@ -46,7 +52,6 @@ $ make -j`getconf _NPROCESSORS_ONLN`
 
 ## Run integration test
 ```
-$ export RISCV=/opt/riscv/
 $ make -C test
 $ cargo run test/hello.bin
 ```
