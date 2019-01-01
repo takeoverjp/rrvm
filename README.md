@@ -25,7 +25,7 @@ $ make
 $ make install
 ```
 
-## Run integration test
+## Run regression tests
 ```
 $ export RISCV=/opt/riscv/
 $ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi
