@@ -943,7 +943,7 @@ mod tests {
     #[test]
     fn test_ori_pos() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b001010101010, 1, 0b110, 2, 0b0010011);
+        let inst: u32 = inst_i(0b0010101_01010, 1, 0b110, 2, 0b0010011);
         reg.x[1] = 0b010111000000;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b011111101010, reg.x[2],
@@ -953,7 +953,7 @@ mod tests {
     #[test]
     fn test_ori_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b101010101010, 1, 0b110, 2, 0b0010011);
+        let inst: u32 = inst_i(0b1010101_01010, 1, 0b110, 2, 0b0010011);
         reg.x[1] = 0b010111000000;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0xffff_ffff_ffff_ffea, reg.x[2],
@@ -963,7 +963,7 @@ mod tests {
     #[test]
     fn test_andi() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b101010101010, 1, 0b111, 2, 0b0010011);
+        let inst: u32 = inst_i(0b1010101_01010, 1, 0b111, 2, 0b0010011);
         reg.x[1] = 0b010101111111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b000000101010, reg.x[2], "{:b}", reg.x[2]);
