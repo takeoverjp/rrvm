@@ -31,11 +31,12 @@ $ cd riscv-tests/build
 $ ../configure --prefix=${RISCV}/target --with-xlen=32
 $ make
 $ make install
+$ riscv32-unknown-elf-objcopy -O binary ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi.bin
 ```
 
 ## Run regression tests
 ```
-$ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi
+$ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi.bin
 ```
 
 # Howto integration test
