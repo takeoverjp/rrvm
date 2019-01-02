@@ -36,7 +36,7 @@ $ riscv32-unknown-elf-objcopy -O binary ${RISCV}/target/share/riscv-tests/isa/rv
 
 ## Run regression tests
 ```
-$ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi.bin
+$ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi.bin -l debug -o 2147483648
 ```
 
 # Howto integration test

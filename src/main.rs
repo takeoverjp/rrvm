@@ -62,6 +62,7 @@ struct Args {
     prog: String,
     log_level: String,
     memory: usize,
+    offset: u64,
 }
 
 struct ControlStatusRegister {
@@ -701,6 +702,9 @@ fn parse_args() -> Args {
     opts.optopt("m", "memory",
                 "Specify the amount of memory (default: 128 MB).",
                 "MEMORY");
+    opts.optopt("o", "offset",
+                "Specify text start address (default: 0x0)",
+                "OFFSET");
     opts.optopt("l", "log-level",
                 "Specify the log level.
                  Ex: 'error' > 'warn' > 'info' > 'debug' > 'trace'",
@@ -726,7 +730,18 @@ fn parse_args() -> Args {
             None => 128 * 1024 * 1024
         },
         Err(e) => {
-            error!("memmap error {:?}", e);
+            error!("opt memory get error {:?}", e);
+            std::process::exit(-1);
+        }
+    };
+
+    let offset = match matches.opt_get::<u64>("o") {
+        Ok(result) => match result {
+            Some(value) => value,
+            None => 0x0
+        },
+        Err(e) => {
+            error!("opt offset get error {:?}", e);
             std::process::exit(-1);
         }
     };
@@ -735,6 +750,7 @@ fn parse_args() -> Args {
         prog: matches.free[0].clone(),
         log_level: log_level,
         memory: memory,
+        offset: offset,
     }
 }
 
@@ -749,6 +765,7 @@ fn main() {
         .init();
 
     let mut reg = RegisterFile::new();
+    reg.pc += args.offset;
     let map = get_memmap(&args.prog);
     let mut mem = map.to_vec();
     unsafe {
@@ -756,7 +773,7 @@ fn main() {
     }
 
     loop {
-        let inst : u32 = fetch(&map, reg.pc as usize);
+        let inst : u32 = fetch(&map, (reg.pc - args.offset) as usize);
         info!("{:08x}: 0x{:08x}", reg.pc, inst);
 
         let opcode = get_opcode(inst);
