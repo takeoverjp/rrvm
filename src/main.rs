@@ -846,7 +846,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lh_neg() {
+    fn test_lh_negative_value() {
         // load negative harf-word (16bit)
         let mut reg = RegisterFile::new();
         let inst: u32 = inst_i(4, 1, 0b001, 2, 0b0000011);
@@ -854,6 +854,17 @@ mod tests {
         reg.x[1] = 0x2;
         handle_load(&mem, &mut reg, inst);
         assert_eq!(-2i64 as u64, reg.x[2]);
+    }
+
+    #[test]
+    fn test_lh_negative_offset() {
+        // load positive harf-word (16bit) with negative offset
+        let mut reg = RegisterFile::new();
+        let inst: u32 = inst_i(-4i16 as u16, 1, 0b001, 2, 0b0000011);
+        let mem: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        reg.x[1] = 10;
+        handle_load(&mem, &mut reg, inst);
+        assert_eq!(0x0706, reg.x[2]);
     }
 
     #[test]
