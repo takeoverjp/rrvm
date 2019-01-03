@@ -3,6 +3,7 @@ extern crate log;
 extern crate env_logger;
 extern crate getopts;
 extern crate memmap;
+extern crate hex;
 
 use std::{env, process};
 use std::fs::File;
@@ -694,6 +695,30 @@ fn print_usage(program: &str, opts: &Options) {
     process::exit(0);
 }
 
+fn str2u64(numstr: &str) -> u64 {
+    let fmt = &numstr[0..2];
+    let len = numstr.len();
+    if fmt == "0x" {
+        let numstr = &numstr[2..len];
+        match hex::decode(numstr) {
+            Ok(result) => {
+                let len = result.len();
+                let mut offset = 0;
+                for (i, b) in result.into_iter().enumerate() {
+                    offset |= (b as u64) << ((len - i - 1) * 8);
+                }
+                return offset;
+            }
+            Err(e) => {
+                error!("decode {:?} failed: {:?}", numstr, e);
+                std::process::exit(-1);
+            }
+        };
+    }
+    error!("decode {:?} failed", numstr);
+    std::process::exit(-1);
+}
+
 fn parse_args() -> Args {
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
@@ -735,16 +760,11 @@ fn parse_args() -> Args {
         }
     };
 
-    let offset = match matches.opt_get::<u64>("o") {
-        Ok(result) => match result {
-            Some(value) => value,
-            None => 0x0
-        },
-        Err(e) => {
-            error!("opt offset get error {:?}", e);
-            std::process::exit(-1);
-        }
+    let offset = match matches.opt_str("o") {
+        Some(value) => value,
+        None => String::from("warn")
     };
+    let offset = str2u64(&offset);
 
     Args {
         prog: matches.free[0].clone(),
