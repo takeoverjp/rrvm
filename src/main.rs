@@ -1378,7 +1378,7 @@ fn main() {
         let inst : u32 = fetch(&map, (reg.pc - args.offset) as usize);
         info!("{:08x}: 0x{:08x}", reg.pc, inst);
         if args.log_spike {
-            println!("core   0: 0xffffffff{:08x} (0x{:08x}", reg.pc, inst);
+            println!("core   0: 0x{:016x} (0x{:08x}", reg.pc, inst);
         }
 
         let opcode = get_opcode(inst);
