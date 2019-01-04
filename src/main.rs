@@ -714,9 +714,9 @@ fn str2u64(numstr: &str) -> u64 {
                 std::process::exit(-1);
             }
         };
+    } else {
+        return numstr.parse().unwrap();
     }
-    error!("decode {:?} failed", numstr);
-    std::process::exit(-1);
 }
 
 fn parse_args() -> Args {
@@ -749,20 +749,15 @@ fn parse_args() -> Args {
         None => String::from("warn")
     };
 
-    let memory = match matches.opt_get::<usize>("m") {
-        Ok(result) => match result {
-            Some(value) => value,
-            None => 128 * 1024 * 1024
-        },
-        Err(e) => {
-            error!("opt memory get error {:?}", e);
-            std::process::exit(-1);
-        }
+    let memory = match matches.opt_str("m") {
+        Some(value) => value,
+        None => String::from("0x08000000"), // 128MB
     };
+    let memory = str2u64(&memory) as usize;
 
     let offset = match matches.opt_str("o") {
         Some(value) => value,
-        None => String::from("warn")
+        None => String::from("0")
     };
     let offset = str2u64(&offset);
 
