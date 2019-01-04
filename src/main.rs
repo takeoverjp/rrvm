@@ -427,6 +427,8 @@ fn sign_ext(val: u64, size: u8) -> i64 {
 
     if (val & (1 << (size - 1))) != 0 {
         ret |= ((1 << (64 - size)) - 1) << size;
+    } else {
+        ret &= !(((1 << (64 - size)) - 1) << size);
     }
 
     ret
@@ -436,8 +438,10 @@ fn sign_ext(val: u64, size: u8) -> i64 {
 fn test_sign_ext() {
     assert_eq!(-1, sign_ext(0xf, 4));
     assert_eq!(7, sign_ext(0x7, 4));
+    assert_eq!(7, sign_ext(0xf007, 4));
     assert_eq!(-1, sign_ext(0xff, 8));
     assert_eq!(0x7f, sign_ext(0x7f, 8));
+    assert_eq!(0x7f, sign_ext(0xf07f, 8));
 }
 
 fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32) {
