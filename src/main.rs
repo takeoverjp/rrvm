@@ -588,7 +588,7 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_XORI      => {
             info!("xori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
             reg.x[rd] = reg.x[rs1] ^ (simm as u64)
-        }
+        },
         FUNCT3_SRLI_SRAI => match funct7 {
             FUNCT7_SRLI  => {
                 info!("srli {},{},{}",
@@ -603,7 +603,7 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
             },
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
-        }
+        },
         FUNCT3_ORI       => {
             info!("ori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
             reg.x[rd] = reg.x[rs1] | (simm as u64);
@@ -624,8 +624,52 @@ fn handle_auipc(reg: &mut RegisterFile, inst: u32) {
     reg.x[rd] = reg.pc + (inst & 0b11111111_11111111_11110000_00000000) as u64
 }
 
-fn handle_op_imm_32(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
+    const FUNCT3_ADDIW       : u32 = 0b000;
+    const FUNCT3_SLLIW       : u32 = 0b001;
+    const FUNCT3_SRLIW_SRAIW : u32 = 0b101;
+    const FUNCT7_SRLIW       : u32 = 0b0000000;
+    const FUNCT7_SRAIW       : u32 = 0b0100000;
+
+    let funct3 = get_funct3(inst);
+    let rd     = get_rd(inst) as usize;
+    let rs1    = get_rs1(inst) as usize;
+    let imm  = get_imm12(inst) as u64;
+    let simm = sign_ext(imm, 12);
+    let shamt  = get_rs2(inst) as u8;
+    let funct7 = get_funct7(inst);
+
+    match funct3 {
+        FUNCT3_ADDIW       => {
+            info!("addiw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
+            let result64 = (reg.x[rs1] as i64 + simm) as u64;
+            reg.x[rd] = sign_ext(result64, 32) as u64;
+        },
+        FUNCT3_SLLIW       => {
+            info!("slliw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], shamt);
+            // reg.x[rd] = reg.x[rs1] << shamt;
+            unimplemented!();
+        },
+        FUNCT3_SRLIW_SRAIW => match funct7 {
+            FUNCT7_SRLIW   => {
+                info!("srliw {},{},{}",
+                      ABI_NAME[rd], ABI_NAME[rs1], shamt);
+                // reg.x[rd] = reg.x[rs1] >> shamt;
+                unimplemented!();
+            },
+            FUNCT7_SRAIW   => {
+                info!("sraiw {},{},{}",
+                      ABI_NAME[rd], ABI_NAME[rs1], shamt);
+                // reg.x[rd] = reg.x[rs1] >> shamt;
+                // reg.x[rd] = sign_ext(reg.x[rd], 64-shamt) as u64;
+                unimplemented!();
+            },
+            _ => warn!("{}: {}: unknown funct7 0x{:x}",
+                          file!(), line!(), funct7)
+        },
+        _ => warn!("{}: {}: unknown funct3 0x{:x}",
+                      file!(), line!(), funct3)
+    }
 }
 
 fn handle_long_op_48(_reg: &RegisterFile, _inst: u32) {
