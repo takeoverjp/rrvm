@@ -66,6 +66,7 @@ const LONG_OP_GE_80 : u32 = 0b11_111;
 struct Args {
     prog: String,
     log_level: String,
+    log_spike: bool,
     memory: usize,
     offset: u64,
 }
@@ -1315,6 +1316,8 @@ fn parse_args() -> Args {
                 "Specify the log level.
                  Ex: 'error' > 'warn' > 'info' > 'debug' > 'trace'",
                 "LEVEL");
+    opts.optflag("s", "log-spike",
+                "Output the spike trace log to compare.");
     opts.optflag("h", "help", "print this help menu");
 
     let matches = opts.parse(&args[1..])
@@ -1329,6 +1332,8 @@ fn parse_args() -> Args {
         Some(value) => value,
         None => String::from("warn")
     };
+
+    let log_spike = matches.opt_present("s");
 
     let memory = match matches.opt_str("m") {
         Some(value) => value,
@@ -1345,6 +1350,7 @@ fn parse_args() -> Args {
     Args {
         prog: matches.free[0].clone(),
         log_level: log_level,
+        log_spike: log_spike,
         memory: memory,
         offset: offset,
     }
@@ -1371,6 +1377,9 @@ fn main() {
     loop {
         let inst : u32 = fetch(&map, (reg.pc - args.offset) as usize);
         info!("{:08x}: 0x{:08x}", reg.pc, inst);
+        if args.log_spike {
+            println!("core   0: 0xffffffff{:08x} (0x{:08x}", reg.pc, inst);
+        }
 
         let opcode = get_opcode(inst);
         match opcode {

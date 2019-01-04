@@ -56,3 +56,12 @@ $ make -j`getconf _NPROCESSORS_ONLN`
 $ make -C test
 $ cargo run test/hello.bin
 ```
+
+
+# Howto compare with spike trace log
+
+```
+$ cargo run ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi.bin -o 0x80000000 -s -l error > rrvm.log
+$ spike --isa=rv32gc -l  ${RISCV}/target/share/riscv-tests/isa/rv32ui-p-addi 2>&1 | cut -d")" -f 1 > spike.log
+$ diff -u spike.log rrvm.log
+```
