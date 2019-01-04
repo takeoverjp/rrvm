@@ -67,7 +67,8 @@ struct Args {
 }
 
 struct ControlStatusRegister {
-    mepc : u64
+    mepc : u64,     // Machine exception program counter
+    mhartid : u64,  // Hardware thread ID
 }
 
 static ABI_NAME: [&'static str; 32] = [
@@ -86,7 +87,8 @@ impl RegisterFile {
     fn new() -> RegisterFile {
         RegisterFile {
             csr: ControlStatusRegister {
-                mepc : 0
+                mepc : 0,
+                mhartid : 0,
             },
             pc: 0,
             x: [0; 32]
@@ -653,6 +655,7 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_CSRRSI       : u32 = 0b110;
     const FUNCT3_CSRRCI       : u32 = 0b111;
     const CSR_MEPC            : u32 = 0x341;
+    const CSR_MHARTID         : u32 = 0xf14;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
@@ -671,7 +674,15 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
             },
             _ => warn!("{}: {}: unknown csr 0x{:x}", file!(), line!(), csr)
         },
-        FUNCT3_CSRRS        => unimplemented!(),
+        FUNCT3_CSRRS        => match csr {
+            CSR_MHARTID => {
+                info!("csrrs {},mhartid,{}", ABI_NAME[rd], ABI_NAME[rs1]);
+                let t = reg.csr.mhartid;
+                reg.csr.mhartid |= reg.x[rs1];
+                reg.x[rd] = t;
+            },
+            _ => warn!("{}: {}: unknown csr 0x{:x}", file!(), line!(), csr)
+        },
         FUNCT3_CSRRC        => unimplemented!(),
         FUNCT3_CSRRWI       => unimplemented!(),
         FUNCT3_CSRRSI       => unimplemented!(),
