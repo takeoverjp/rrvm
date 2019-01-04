@@ -1203,7 +1203,13 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
             }
         },
         FUNCT3_CSRRC        => unimplemented!(),
-        FUNCT3_CSRRWI       => unimplemented!(),
+        FUNCT3_CSRRWI       => {
+            if rd != 0 {
+                reg.x[rd] = csr_val;
+            }
+            let new_val = rs1 as u64;
+            set_csr(reg, csr_addr, new_val);
+        }
         FUNCT3_CSRRSI       => unimplemented!(),
         FUNCT3_CSRRCI       => unimplemented!(),
         _ => warn!("{}: {}: unknown funct3 0x{:x}", file!(), line!(), funct3)
