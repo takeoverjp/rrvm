@@ -1217,12 +1217,17 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_ECALL_EBREAK => {
             const IMM12_ECALL  : u32 = 0b0000_0000_0000;
             const IMM12_EBREAK : u32 = 0b0000_0000_0001;
+            const IMM12_MRET   : u32 = 0b0011_0000_0010;
 
             let imm12 = get_imm12(inst);
 
             match imm12 {
                 IMM12_ECALL  => info!("ecall"),
                 IMM12_EBREAK => info!("break"),
+                IMM12_MRET   => {
+                    info!("mret");
+                    reg.pc = reg.csr.mepc;
+                }
                 _ => unimplemented!(),
             }
         },
