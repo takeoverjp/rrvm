@@ -17,6 +17,8 @@ const RS1_MASK    : u32 = 0b00000000_00001111_10000000_00000000;
 const IMM12_MASK  : u32 = 0b11111111_11110000_00000000_00000000;
 const RS2_MASK    : u32 = 0b00000001_11110000_00000000_00000000;
 const FUNCT7_MASK : u32 = 0b11111110_00000000_00000000_00000000;
+const FENCE_PRED_MASK : u32 = 0b00001111_00000000_00000000_00000000;
+const FENCE_SUCC_MASK : u32 = 0b00000000_11110000_00000000_00000000;
 const OPCODE_SHIFT : u8 = 2;
 const RD_SHIFT     : u8 = 7;
 const FUNCT3_SHIFT : u8 = 12;
@@ -24,6 +26,8 @@ const RS1_SHIFT    : u8 = 15;
 const IMM12_SHIFT  : u8 = 20;
 const RS2_SHIFT    : u8 = 20;
 const FUNCT7_SHIFT : u8 = 25;
+const FENCE_PRED_SHIFT : u8 = 24;
+const FENCE_SUCC_SHIFT : u8 = 20;
 
 const LOAD          : u32 = 0b00_000;
 const LOAD_FP       : u32 = 0b00_001;
@@ -405,6 +409,14 @@ fn get_funct7(inst: u32) -> u32 {
     (inst & FUNCT7_MASK) >> FUNCT7_SHIFT
 }
 
+fn get_fence_pred(inst: u32) -> u32 {
+    (inst & FENCE_PRED_MASK) >> FENCE_PRED_SHIFT
+}
+
+fn get_fence_succ(inst: u32) -> u32 {
+    (inst & FENCE_SUCC_MASK) >> FENCE_SUCC_SHIFT
+}
+
 fn fetch(map: &memmap::Mmap, pc: usize) -> u32 {
     u8x4_to_u32(map[pc+0], map[pc+1], map[pc+2], map[pc+3])
 }
@@ -523,9 +535,13 @@ fn handle_misc_mem(_reg: &RegisterFile, inst: u32) {
     match funct3 {
         FUNCT3_FENCE => {
             // nothing to do
+            let pred = get_fence_pred(inst);
+            let succ = get_fence_succ(inst);
+            info!("fence pred={:b} succ={:b}", pred, succ);
         },
         FUNCT3_FENCE_I => {
             // nothing to do
+            info!("fence.i");
         },
         _ => unimplemented!(),
     }
