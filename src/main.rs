@@ -514,8 +514,21 @@ fn handle_custom_0(_reg: &RegisterFile, _inst: u32) {
     warn!("{}: {}: Not implemented", file!(), line!());
 }
 
-fn handle_misc_mem(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+fn handle_misc_mem(_reg: &RegisterFile, inst: u32) {
+    const FUNCT3_FENCE   : u32 = 0b000;
+    const FUNCT3_FENCE_I : u32 = 0b001;
+
+    let funct3 = get_funct3(inst);
+
+    match funct3 {
+        FUNCT3_FENCE => {
+            // nothing to do
+        },
+        FUNCT3_FENCE_I => {
+            // nothing to do
+        },
+        _ => unimplemented!(),
+    }
 }
 
 fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
