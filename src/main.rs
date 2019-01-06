@@ -623,9 +623,10 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
 
 fn handle_auipc(reg: &mut RegisterFile, inst: u32) {
     let rd  = get_rd(inst) as usize;
+    let imm = sign_ext((inst & 0b11111111_11111111_11110000_00000000) as u64, 32);
 
     info!("auipc {},{}", ABI_NAME[rd], inst >> 12);
-    reg.x[rd] = reg.pc + (inst & 0b11111111_11111111_11110000_00000000) as u64
+    reg.x[rd] = (reg.pc as i64 + imm) as u64;
 }
 
 fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
