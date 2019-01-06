@@ -6,6 +6,7 @@ extern crate memmap;
 extern crate hex;
 
 use std::{env, process};
+use std::io::Write;
 use std::fs::File;
 use getopts::Options;
 use memmap::MmapOptions;
@@ -368,7 +369,7 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
     let file = match File::open(file_path) {
         Ok(file) => file,
         Err(e) => {
-            error!("file({}) open error {:?}", file_path, e);
+            writeln!(std::io::stderr(), "file({}) open error {:?}", file_path, e);
             std::process::exit(1);
         }
     };
@@ -377,7 +378,7 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
         match MmapOptions::new().map(&file) {
             Ok(map) => map,
             Err(e) => {
-                error!("memmap error {:?}", e);
+                writeln!(std::io::stderr(), "memmap error {:?}", e);
                 std::process::exit(1);
             }
         }
@@ -692,10 +693,10 @@ fn mmio_store(addr: u64, val: u64) {
         },
         RISCV_TESTS_TOHOST => {
             if val == 1 {
-                println!("@@@ riscv-tests: success");
+                writeln!(std::io::stderr(), "@@@ riscv-tests: success");
                 std::process::exit(0);
             } else {
-                println!("@@@ riscv-tests: failed {:?}", val >> 1);
+                writeln!(std::io::stderr(), "@@@ riscv-tests: failed {:?}", val >> 1);
                 std::process::exit(1);
             }
         },
@@ -1064,7 +1065,7 @@ fn get_csr(reg: &mut RegisterFile, addr: u32) -> u64 {
         CSR_DPC            => reg.csr.dpc,
         CSR_DSCRATCH       => reg.csr.dscratch,
         _ => {
-            error!("{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+            writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
             std::process::exit(1);
         }
     }
@@ -1156,7 +1157,7 @@ fn get_csr_name(addr: u32) -> &'static str {
         CSR_DPC            => "dpc",
         CSR_DSCRATCH       => "dscratch",
         _ => {
-            error!("{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+            writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
             std::process::exit(1);
         }
     }
@@ -1248,7 +1249,7 @@ fn set_csr(reg: &mut RegisterFile, addr: u32, val: u64) {
         CSR_DPC            => {reg.csr.dpc = val;},
         CSR_DSCRATCH       => {reg.csr.dscratch = val;},
         _ => {
-            error!("{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+            writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
             std::process::exit(1);
         }
     }
@@ -1377,7 +1378,7 @@ fn str2u64(numstr: &str) -> u64 {
                 return offset;
             }
             Err(e) => {
-                error!("decode {:?} failed: {:?}", numstr, e);
+                writeln!(std::io::stderr(), "decode {:?} failed: {:?}", numstr, e);
                 std::process::exit(1);
             }
         };
