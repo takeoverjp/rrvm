@@ -1476,6 +1476,7 @@ fn main() {
         }
 
         reg.pc += 4;
+        reg.x[0] = 0;
 
         reg.dump();
     }
