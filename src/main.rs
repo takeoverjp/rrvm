@@ -16,7 +16,9 @@ const FUNCT3_MASK : u32 = 0b00000000_00000000_01110000_00000000;
 const RS1_MASK    : u32 = 0b00000000_00001111_10000000_00000000;
 const IMM12_MASK  : u32 = 0b11111111_11110000_00000000_00000000;
 const RS2_MASK    : u32 = 0b00000001_11110000_00000000_00000000;
+const SHAMT_MASK  : u32 = 0b00000011_11110000_00000000_00000000;
 const FUNCT7_MASK : u32 = 0b11111110_00000000_00000000_00000000;
+const FUNCT6_MASK : u32 = 0b11111100_00000000_00000000_00000000;
 const FENCE_PRED_MASK : u32 = 0b00001111_00000000_00000000_00000000;
 const FENCE_SUCC_MASK : u32 = 0b00000000_11110000_00000000_00000000;
 const OPCODE_SHIFT : u8 = 2;
@@ -25,7 +27,9 @@ const FUNCT3_SHIFT : u8 = 12;
 const RS1_SHIFT    : u8 = 15;
 const IMM12_SHIFT  : u8 = 20;
 const RS2_SHIFT    : u8 = 20;
+const SHAMT_SHIFT  : u8 = 20;
 const FUNCT7_SHIFT : u8 = 25;
+const FUNCT6_SHIFT : u8 = 26;
 const FENCE_PRED_SHIFT : u8 = 24;
 const FENCE_SUCC_SHIFT : u8 = 20;
 
@@ -406,8 +410,16 @@ fn get_rs2(inst: u32) -> u32 {
     (inst & RS2_MASK) >> RS2_SHIFT
 }
 
+fn get_shamt(inst: u32) -> u32 {
+    (inst & SHAMT_MASK) >> SHAMT_SHIFT
+}
+
 fn get_funct7(inst: u32) -> u32 {
     (inst & FUNCT7_MASK) >> FUNCT7_SHIFT
+}
+
+fn get_funct6(inst: u32) -> u32 {
+    (inst & FUNCT6_MASK) >> FUNCT6_SHIFT
 }
 
 fn get_fence_pred(inst: u32) -> u32 {
@@ -559,8 +571,8 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_SLTIU     : u32 = 0b011;
     const FUNCT3_XORI      : u32 = 0b100;
     const FUNCT3_SRLI_SRAI : u32 = 0b101;
-    const FUNCT7_SRLI      : u32 = 0b0000000;
-    const FUNCT7_SRAI      : u32 = 0b0100000;
+    const FUNCT6_SRLI      : u32 = 0b000000;
+    const FUNCT6_SRAI      : u32 = 0b010000;
     const FUNCT3_ORI       : u32 = 0b110;
     const FUNCT3_ANDI      : u32 = 0b111;
 
@@ -569,8 +581,9 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
     let rs1    = get_rs1(inst) as usize;
     let imm  = get_imm12(inst) as u64;
     let simm = sign_ext(imm, 12);
-    let shamt  = get_rs2(inst) as u8;
+    let shamt  = get_shamt(inst) as u8;
     let funct7 = get_funct7(inst);
+    let funct6 = get_funct6(inst);
 
     match funct3 {
         FUNCT3_ADDI      => {
@@ -593,13 +606,13 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
             info!("xori {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
             reg.x[rd] = reg.x[rs1] ^ (simm as u64)
         },
-        FUNCT3_SRLI_SRAI => match funct7 {
-            FUNCT7_SRLI  => {
+        FUNCT3_SRLI_SRAI => match funct6 {
+            FUNCT6_SRLI  => {
                 info!("srli {},{},{}",
                       ABI_NAME[rd], ABI_NAME[rs1], shamt);
                 reg.x[rd] = reg.x[rs1] >> shamt;
             },
-            FUNCT7_SRAI  => {
+            FUNCT6_SRAI  => {
                 info!("srai {},{},{}",
                       ABI_NAME[rd], ABI_NAME[rs1], shamt);
                 reg.x[rd] = reg.x[rs1] >> shamt;
@@ -632,16 +645,17 @@ fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_ADDIW       : u32 = 0b000;
     const FUNCT3_SLLIW       : u32 = 0b001;
     const FUNCT3_SRLIW_SRAIW : u32 = 0b101;
-    const FUNCT7_SRLIW       : u32 = 0b0000000;
-    const FUNCT7_SRAIW       : u32 = 0b0100000;
+    const FUNCT6_SRLIW       : u32 = 0b000000;
+    const FUNCT6_SRAIW       : u32 = 0b010000;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
     let imm  = get_imm12(inst) as u64;
     let simm = sign_ext(imm, 12);
-    let shamt  = get_rs2(inst) as u8;
+    let shamt  = get_shamt(inst) as u8;
     let funct7 = get_funct7(inst);
+    let funct6 = get_funct6(inst);
 
     match funct3 {
         FUNCT3_ADDIW       => {
@@ -654,14 +668,14 @@ fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
             // reg.x[rd] = reg.x[rs1] << shamt;
             unimplemented!();
         },
-        FUNCT3_SRLIW_SRAIW => match funct7 {
-            FUNCT7_SRLIW   => {
+        FUNCT3_SRLIW_SRAIW => match funct6 {
+            FUNCT6_SRLIW   => {
                 info!("srliw {},{},{}",
                       ABI_NAME[rd], ABI_NAME[rs1], shamt);
                 // reg.x[rd] = reg.x[rs1] >> shamt;
                 unimplemented!();
             },
-            FUNCT7_SRAIW   => {
+            FUNCT6_SRAIW   => {
                 info!("sraiw {},{},{}",
                       ABI_NAME[rd], ABI_NAME[rs1], shamt);
                 // reg.x[rd] = reg.x[rs1] >> shamt;
@@ -768,8 +782,8 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_SLTU    : u32 = 0b011;
     const FUNCT3_XOR     : u32 = 0b100;
     const FUNCT3_SRL_SRA : u32 = 0b101;
-    const FUNCT7_SRL     : u32 = 0b0000000;
-    const FUNCT7_SRA     : u32 = 0b0100000;
+    const FUNCT6_SRL     : u32 = 0b000000;
+    const FUNCT6_SRA     : u32 = 0b010000;
     const FUNCT3_OR      : u32 = 0b110;
     const FUNCT3_AND     : u32 = 0b111;
 
@@ -778,6 +792,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
     let rs1    = get_rs1(inst) as usize;
     let rs2    = get_rs2(inst) as usize;
     let funct7 = get_funct7(inst);
+    let funct6 = get_funct6(inst);
 
     match funct3 {
         FUNCT3_ADD_SUB => match funct7 {
@@ -808,12 +823,12 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
             info!("xor {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
             reg.x[rd] = reg.x[rs1] - reg.x[rs2];
         },
-        FUNCT3_SRL_SRA => match funct7 {
-            FUNCT7_SRL => {
+        FUNCT3_SRL_SRA => match funct6 {
+            FUNCT6_SRL => {
                 info!("srl {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
                 reg.x[rd] = reg.x[rs1] - reg.x[rs2];
             },
-            FUNCT7_SRA => {
+            FUNCT6_SRA => {
                 info!("sra {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
                 reg.x[rd] = reg.x[rs1] - reg.x[rs2]; // TODO
             },
