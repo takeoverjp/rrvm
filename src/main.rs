@@ -1288,6 +1288,7 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
         },
         FUNCT3_CSRRC        => unimplemented!(),
         FUNCT3_CSRRWI       => {
+            info!("csrrwi {},{},{}", ABI_NAME[rd], csr_name, ABI_NAME[rs1]);
             if rd != 0 {
                 reg.x[rd] = csr_val;
             }
