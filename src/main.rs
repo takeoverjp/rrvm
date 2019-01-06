@@ -1465,31 +1465,40 @@ fn main() {
 mod tests {
     use super::*;
 
-    fn inst_i(_imm:u16, _rs1:u8, _funct3:u8, _rsd:u8, _opcode:u8) -> u32 {
+    fn inst_i(_imm:u16, _rs1:u8, _funct3:u8, _rd:u8, _opcode:u8) -> u32 {
         let imm    = _imm    & ((1 << 12) - 1);
         let rs1    = _rs1    & ((1 <<  5) - 1);
         let funct3 = _funct3 & ((1 <<  3) - 1);
-        let rsd    = _rsd    & ((1 <<  5) - 1);
+        let rd     = _rd     & ((1 <<  5) - 1);
         let opcode = _opcode & ((1 <<  7) - 1);
         return ((imm as u32)   << (5 + 3 + 5 + 7))
             | ((rs1 as u32)    << (3 + 5 + 7))
             | ((funct3 as u32) << (5 + 7))
-            | ((rsd as u32)    << 7)
+            | ((rd as u32)     << 7)
             | (opcode as u32);
     }
 
-    fn inst_i_shamt(_l_or_a:u8, _shamt:u8, _rs1:u8, _funct3:u8, _rsd:u8, _opcode:u8) -> u32 {
+    fn inst_i_shamt(_l_or_a:u8, _shamt:u8, _rs1:u8, _funct3:u8, _rd:u8, _opcode:u8) -> u32 {
         let l_or_a = _l_or_a & ((1 << 6) - 1);
         let shamt  = _shamt  & ((1 << 6) - 1);
         let rs1    = _rs1    & ((1 << 5) - 1);
         let funct3 = _funct3 & ((1 << 3) - 1);
-        let rsd    = _rsd    & ((1 << 5) - 1);
+        let rd     = _rd     & ((1 << 5) - 1);
         let opcode = _opcode & ((1 << 7) - 1);
-        return ((l_or_a as u32)   << (6 + 5 + 3 + 5 + 7))
-            | ((shamt as u32)  << (5 + 3 + 5 + 7))
-            | ((rs1 as u32)    << (3 + 5 + 7))
-            | ((funct3 as u32) << (5 + 7))
-            | ((rsd as u32)    << 7)
+        return ((l_or_a as u32) << (6 + 5 + 3 + 5 + 7))
+            | ((shamt as u32)   << (5 + 3 + 5 + 7))
+            | ((rs1 as u32)     << (3 + 5 + 7))
+            | ((funct3 as u32)  << (5 + 7))
+            | ((rd as u32)     << 7)
+            | (opcode as u32);
+    }
+
+    fn inst_u(_imm:u32, _rd:u8, _opcode:u8) -> u32 {
+        let imm    = _imm    & ((1 << 20) - 1);
+        let rd     = _rd     & ((1 <<  5) - 1);
+        let opcode = _opcode & ((1 <<  7) - 1);
+        return ((imm as u32)   << (5 + 7))
+            | ((rd as u32)     << 7)
             | (opcode as u32);
     }
 
@@ -1710,5 +1719,23 @@ mod tests {
         reg.x[1] = 0b010101111111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b000000101010, reg.x[2], "{:b}", reg.x[2]);
+    }
+
+    #[test]
+    fn test_auipc() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = inst_u(0x123, 2, 0b0010111);
+        reg.pc = 0xabc;
+        handle_auipc(&mut reg, inst);
+        assert_eq!(0x123abc, reg.x[2], "0x{:x}", reg.x[2])
+    }
+
+    #[test]
+    fn test_auipc_neg() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = inst_u(-8i32 as u32, 2, 0b0010111);
+        reg.pc = 0x8abc;
+        handle_auipc(&mut reg, inst);
+        assert_eq!(0xabc, reg.x[2], "0x{:x}", reg.x[2])
     }
 }
