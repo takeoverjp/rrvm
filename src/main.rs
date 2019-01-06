@@ -10,6 +10,8 @@ use std::fs::File;
 use getopts::Options;
 use memmap::MmapOptions;
 
+const XLEN: u32 = 64;
+
 const OPCODE_MASK : u32 = 0b00000000_00000000_00000000_01111100;
 const RD_MASK     : u32 = 0b00000000_00000000_00001111_10000000;
 const FUNCT3_MASK : u32 = 0b00000000_00000000_01110000_00000000;
@@ -1246,6 +1248,8 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_CSRRWI       : u32 = 0b101;
     const FUNCT3_CSRRSI       : u32 = 0b110;
     const FUNCT3_CSRRCI       : u32 = 0b111;
+    const MCAUSE_BREAK        : u64 = (0 << (XLEN -1)) |  3u64;
+    const MCAUSE_M_ECALL      : u64 = (0 << (XLEN -1)) | 11u64;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
@@ -1263,8 +1267,20 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
             let imm12 = get_imm12(inst);
 
             match imm12 {
-                IMM12_ECALL  => info!("ecall"),
-                IMM12_EBREAK => info!("break"),
+                IMM12_ECALL  => {
+                    info!("ecall");
+                    reg.csr.mcause = MCAUSE_M_ECALL;
+                    reg.csr.mepc = reg.pc;
+                    reg.pc = reg.csr.mtvec;
+                    reg.pc -= 4; // increment after the handler.
+                },
+                IMM12_EBREAK => {
+                    info!("ebreak");
+                    reg.csr.mcause = MCAUSE_BREAK;
+                    reg.csr.mepc = reg.pc;
+                    reg.pc = reg.csr.mtvec;
+                    reg.pc -= 4; // increment after the handler.
+                },
                 IMM12_MRET   => {
                     info!("mret");
                     reg.pc = reg.csr.mepc;
