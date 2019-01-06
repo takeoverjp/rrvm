@@ -1249,7 +1249,13 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_CSRRSI       : u32 = 0b110;
     const FUNCT3_CSRRCI       : u32 = 0b111;
     const MCAUSE_BREAK        : u64 = (0 << (XLEN -1)) |  3u64;
-    const MCAUSE_M_ECALL      : u64 = (0 << (XLEN -1)) | 11u64;
+    const MCAUSE_USER_ECALL         : u64 = (0 << (XLEN -1)) |  8u64;
+    const MCAUSE_SUPERVISOR_ECALL   : u64 = (0 << (XLEN -1)) |  9u64;
+    const MCAUSE_MACHINE_ECALL      : u64 = (0 << (XLEN -1)) | 11u64;
+
+    const MPP_USER       : u8 = 0b00;
+    const MPP_SUPERVISOR : u8 = 0b10;
+    const MPP_MACHINE    : u8 = 0b11;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
@@ -1257,6 +1263,7 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
     let csr_addr = get_imm12(inst);
     let csr_val = get_csr(reg, csr_addr);
     let csr_name = get_csr_name(csr_addr);
+    let mpp = ((reg.csr.mstatus >> 11) & 0b11) as u8;
 
     match funct3 {
         FUNCT3_ECALL_EBREAK => {
@@ -1269,7 +1276,12 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
             match imm12 {
                 IMM12_ECALL  => {
                     info!("ecall");
-                    reg.csr.mcause = MCAUSE_M_ECALL;
+                    reg.csr.mcause = match mpp {
+                        MPP_USER       => MCAUSE_USER_ECALL,
+                        MPP_SUPERVISOR => MCAUSE_SUPERVISOR_ECALL,
+                        MPP_MACHINE    => MCAUSE_MACHINE_ECALL,
+                        _ => unimplemented!(),
+                    };
                     reg.csr.mepc = reg.pc;
                     reg.pc = reg.csr.mtvec;
                     reg.pc -= 4; // increment after the handler.
