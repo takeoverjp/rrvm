@@ -369,7 +369,7 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
         Ok(file) => file,
         Err(e) => {
             error!("file({}) open error {:?}", file_path, e);
-            std::process::exit(-1);
+            std::process::exit(1);
         }
     };
 
@@ -378,7 +378,7 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
             Ok(map) => map,
             Err(e) => {
                 error!("memmap error {:?}", e);
-                std::process::exit(-1);
+                std::process::exit(1);
             }
         }
     };
@@ -1065,7 +1065,7 @@ fn get_csr(reg: &mut RegisterFile, addr: u32) -> u64 {
         CSR_DSCRATCH       => reg.csr.dscratch,
         _ => {
             error!("{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
-            std::process::exit(-1);
+            std::process::exit(1);
         }
     }
 }
@@ -1157,7 +1157,7 @@ fn get_csr_name(addr: u32) -> &'static str {
         CSR_DSCRATCH       => "dscratch",
         _ => {
             error!("{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
-            std::process::exit(-1);
+            std::process::exit(1);
         }
     }
 }
@@ -1249,7 +1249,7 @@ fn set_csr(reg: &mut RegisterFile, addr: u32, val: u64) {
         CSR_DSCRATCH       => {reg.csr.dscratch = val;},
         _ => {
             error!("{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
-            std::process::exit(-1);
+            std::process::exit(1);
         }
     }
 }
@@ -1378,7 +1378,7 @@ fn str2u64(numstr: &str) -> u64 {
             }
             Err(e) => {
                 error!("decode {:?} failed: {:?}", numstr, e);
-                std::process::exit(-1);
+                std::process::exit(1);
             }
         };
     } else {
