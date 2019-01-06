@@ -1267,6 +1267,8 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
                 IMM12_MRET   => {
                     info!("mret");
                     reg.pc = reg.csr.mepc;
+                    debug!("mret jumps to 0x{:016x}", reg.pc);
+                    reg.pc -= 4; // increment after the handler.
                 }
                 _ => unimplemented!(),
             }
