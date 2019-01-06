@@ -826,9 +826,10 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
 
 fn handle_lui(reg: &mut RegisterFile, inst: u32) {
     let rd  = get_rd(inst) as usize;
-    info!("lui {},0x{:x}", ABI_NAME[rd], inst >> 12);
+    let imm = sign_ext((inst & 0b11111111_11111111_11110000_00000000) as u64, 32);
 
-    reg.x[rd] = (inst & 0b11111111_11111111_11110000_00000000) as u64
+    info!("lui {},0x{:x}", ABI_NAME[rd], inst >> 12);
+    reg.x[rd] = imm as u64;
 }
 
 fn handle_op_32(_reg: &RegisterFile, _inst: u32) {
