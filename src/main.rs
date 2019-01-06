@@ -684,8 +684,22 @@ fn mmio_region(addr: u64) -> bool {
 
 fn mmio_store(addr: u64, val: u64) {
     const UART_TXBUF: u64 = 0x80000000 + 0x08;
-    if addr == UART_TXBUF {
-        println!("@@@ {:?}", (val as u8) as char);
+    const RISCV_TESTS_TOHOST: u64 = 0x80000000 + 0x1000;
+
+    match addr {
+        UART_TXBUF => {
+            println!("@@@ {:?}", (val as u8) as char);
+        },
+        RISCV_TESTS_TOHOST => {
+            if val == 1 {
+                println!("@@@ riscv-tests: success");
+                std::process::exit(0);
+            } else {
+                println!("@@@ riscv-tests: failed {:?}", val >> 1);
+                std::process::exit(1);
+            }
+        },
+        _ => unimplemented!(),
     }
 }
 
