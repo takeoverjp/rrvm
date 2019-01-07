@@ -111,6 +111,284 @@ struct ControlStatusRegister {
     dscratch       : u64, // Debug scratch register.
 }
 
+impl ControlStatusRegister {
+    fn get_name(addr: u32) -> &'static str {
+        match addr {
+            // User mode
+            CSR_USTATUS        => "ustatus",
+            CSR_UIE            => "uie",
+            CSR_UTVEC          => "utvec",
+            CSR_USCRATCH       => "uscratch",
+            CSR_UEPC           => "uepc",
+            CSR_UCAUSE         => "ucause",
+            CSR_UTVAL          => "utval",
+            CSR_UIP            => "uip",
+            CSR_FFLAGS         => "fflags",
+            CSR_FRM            => "frm",
+            CSR_FCSR           => "fcsr",
+            CSR_CYCLE          => "cycle",
+            CSR_TIME           => "time",
+            CSR_INSTRET        => "instret",
+            CSR_HPMCOUNTER3    => "hpmcounter3",
+            CSR_HPMCOUNTER4    => "hpmcounter4",
+            CSR_HPMCOUNTER31   => "hpmcounter31",
+            CSR_CYCLEH         => "cycleh",
+            CSR_TIMEH          => "timeh",
+            CSR_INSTRETH       => "instreth",
+            CSR_HPMCOUNTER3H   => "hpmcounter3h",
+            CSR_HPMCOUNTER4H   => "hpmcounter4h",
+            CSR_HPMCOUNTER31H  => "hpmcounter31h",
+            // Supervisor mode
+            CSR_SSTATUS        => "sstatus",
+            CSR_SEDELEG        => "sedeleg",
+            CSR_SIDELEG        => "sideleg",
+            CSR_SIE            => "sie",
+            CSR_STVEC          => "stvec",
+            CSR_SCOUNTEREN     => "scounteren",
+            CSR_SSCRATCH       => "sscratch",
+            CSR_SEPC           => "sepc",
+            CSR_SCAUSE         => "scause",
+            CSR_STVAL          => "stval",
+            CSR_SIP            => "sip",
+            CSR_SATP           => "satp",
+            // Machine mode
+            CSR_MVENDORID      => "mvendorid",
+            CSR_MARCHID        => "marchid",
+            CSR_MIMPID         => "mimpid",
+            CSR_MHARTID        => "mhartid",
+            CSR_MSTATUS        => "mstatus",
+            CSR_MISA           => "misa",
+            CSR_MEDELEG        => "medeleg",
+            CSR_MIDELEG        => "mideleg",
+            CSR_MIE            => "mie",
+            CSR_MTVEC          => "mtvec",
+            CSR_MCOUNTEREN     => "mcounteren",
+            CSR_MSCRATCH       => "mscratch",
+            CSR_MEPC           => "mepc",
+            CSR_MCAUSE         => "mcause",
+            CSR_MTVAL          => "mtval",
+            CSR_MIP            => "mip",
+            CSR_PMPCFG0        => "pmpcfg0",
+            CSR_PMPCFG1        => "pmpcfg1",
+            CSR_PMPCFG2        => "pmpcfg2",
+            CSR_PMPCFG3        => "pmpcfg3",
+            CSR_PMPADDR0       => "pmpaddr0",
+            CSR_PMPADDR1       => "pmpaddr1",
+            CSR_PMPADDR15      => "pmpaddr15",
+            CSR_MCYCLE         => "mcycle",
+            CSR_MINSTRET       => "minstret",
+            CSR_MHPMCOUNTER3   => "mhpmcounter3",
+            CSR_MHPMCOUNTER4   => "mhpmcounter4",
+            CSR_MHPMCOUNTER31  => "mhpmcounter31",
+            CSR_MCYCLEH        => "mcycleh",
+            CSR_MINSTRETH      => "minstreth",
+            CSR_MHPMCOUNTER3H  => "mhpmcounter3h",
+            CSR_MHPMCOUNTER4H  => "mhpmcounter4h",
+            CSR_MHPMCOUNTER31H => "mhpmcounter31h",
+            CSR_MCOUNTINHIBIT  => "mcountinhibit",
+            CSR_MHPMEVENT3     => "mhpmevent3",
+            CSR_MHPMEVENT4     => "mhpmevent4",
+            CSR_MHPMEVENT31    => "mhpmevent31",
+            CSR_TSELECT        => "tselect",
+            CSR_TDATA1         => "tdata1",
+            CSR_TDATA2         => "tdata2",
+            CSR_TDATA3         => "tdata3",
+            // Device
+            CSR_DCSR           => "dcsr",
+            CSR_DPC            => "dpc",
+            CSR_DSCRATCH       => "dscratch",
+            _ => {
+                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    fn get(&self, addr: u32) -> u64 {
+        match addr {
+            // User mode
+            CSR_USTATUS        => self.ustatus,
+            CSR_UIE            => self.uie,
+            CSR_UTVEC          => self.utvec,
+            CSR_USCRATCH       => self.uscratch,
+            CSR_UEPC           => self.uepc,
+            CSR_UCAUSE         => self.ucause,
+            CSR_UTVAL          => self.utval,
+            CSR_UIP            => self.uip,
+            CSR_FFLAGS         => self.fflags,
+            CSR_FRM            => self.frm,
+            CSR_FCSR           => self.fcsr,
+            CSR_CYCLE          => self.cycle,
+            CSR_TIME           => self.time,
+            CSR_INSTRET        => self.instret,
+            CSR_HPMCOUNTER3    => self.hpmcounter3,
+            CSR_HPMCOUNTER4    => self.hpmcounter4,
+            CSR_HPMCOUNTER31   => self.hpmcounter31,
+            CSR_CYCLEH         => self.cycleh,
+            CSR_TIMEH          => self.timeh,
+            CSR_INSTRETH       => self.instreth,
+            CSR_HPMCOUNTER3H   => self.hpmcounter3h,
+            CSR_HPMCOUNTER4H   => self.hpmcounter4h,
+            CSR_HPMCOUNTER31H  => self.hpmcounter31h,
+            // Supervisor mode
+            CSR_SSTATUS        => self.sstatus,
+            CSR_SEDELEG        => self.sedeleg,
+            CSR_SIDELEG        => self.sideleg,
+            CSR_SIE            => self.sie,
+            CSR_STVEC          => self.stvec,
+            CSR_SCOUNTEREN     => self.scounteren,
+            CSR_SSCRATCH       => self.sscratch,
+            CSR_SEPC           => self.sepc,
+            CSR_SCAUSE         => self.scause,
+            CSR_STVAL          => self.stval,
+            CSR_SIP            => self.sip,
+            CSR_SATP           => self.satp,
+            // Machine mode
+            CSR_MVENDORID      => self.mvendorid,
+            CSR_MARCHID        => self.marchid,
+            CSR_MIMPID         => self.mimpid,
+            CSR_MHARTID        => self.mhartid,
+            CSR_MSTATUS        => self.mstatus,
+            CSR_MISA           => self.misa,
+            CSR_MEDELEG        => self.medeleg,
+            CSR_MIDELEG        => self.mideleg,
+            CSR_MIE            => self.mie,
+            CSR_MTVEC          => self.mtvec,
+            CSR_MCOUNTEREN     => self.mcounteren,
+            CSR_MSCRATCH       => self.mscratch,
+            CSR_MEPC           => self.mepc,
+            CSR_MCAUSE         => self.mcause,
+            CSR_MTVAL          => self.mtval,
+            CSR_MIP            => self.mip,
+            CSR_PMPCFG0        => self.pmpcfg0,
+            CSR_PMPCFG1        => self.pmpcfg1,
+            CSR_PMPCFG2        => self.pmpcfg2,
+            CSR_PMPCFG3        => self.pmpcfg3,
+            CSR_PMPADDR0       => self.pmpaddr0,
+            CSR_PMPADDR1       => self.pmpaddr1,
+            CSR_PMPADDR15      => self.pmpaddr15,
+            CSR_MCYCLE         => self.mcycle,
+            CSR_MINSTRET       => self.minstret,
+            CSR_MHPMCOUNTER3   => self.mhpmcounter3,
+            CSR_MHPMCOUNTER4   => self.mhpmcounter4,
+            CSR_MHPMCOUNTER31  => self.mhpmcounter31,
+            CSR_MCYCLEH        => self.mcycleh,
+            CSR_MINSTRETH      => self.minstreth,
+            CSR_MHPMCOUNTER3H  => self.mhpmcounter3h,
+            CSR_MHPMCOUNTER4H  => self.mhpmcounter4h,
+            CSR_MHPMCOUNTER31H => self.mhpmcounter31h,
+            CSR_MCOUNTINHIBIT  => self.mcountinhibit,
+            CSR_MHPMEVENT3     => self.mhpmevent3,
+            CSR_MHPMEVENT4     => self.mhpmevent4,
+            CSR_MHPMEVENT31    => self.mhpmevent31,
+            CSR_TSELECT        => self.tselect,
+            CSR_TDATA1         => self.tdata1,
+            CSR_TDATA2         => self.tdata2,
+            CSR_TDATA3         => self.tdata3,
+            // Device
+            CSR_DCSR           => self.dcsr,
+            CSR_DPC            => self.dpc,
+            CSR_DSCRATCH       => self.dscratch,
+            _ => {
+                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    fn set(&mut self, addr: u32, val: u64) {
+        match addr {
+            // User mode
+            CSR_USTATUS        => {self.ustatus = val;},
+            CSR_UIE            => {self.uie = val;},
+            CSR_UTVEC          => {self.utvec = val;},
+            CSR_USCRATCH       => {self.uscratch = val;},
+            CSR_UEPC           => {self.uepc = val;},
+            CSR_UCAUSE         => {self.ucause = val;},
+            CSR_UTVAL          => {self.utval = val;},
+            CSR_UIP            => {self.uip = val;},
+            CSR_FFLAGS         => {self.fflags = val;},
+            CSR_FRM            => {self.frm = val;},
+            CSR_FCSR           => {self.fcsr = val;},
+            CSR_CYCLE          => {self.cycle = val;},
+            CSR_TIME           => {self.time = val;},
+            CSR_INSTRET        => {self.instret = val;},
+            CSR_HPMCOUNTER3    => {self.hpmcounter3 = val;},
+            CSR_HPMCOUNTER4    => {self.hpmcounter4 = val;},
+            CSR_HPMCOUNTER31   => {self.hpmcounter31 = val;},
+            CSR_CYCLEH         => {self.cycleh = val;},
+            CSR_TIMEH          => {self.timeh = val;},
+            CSR_INSTRETH       => {self.instreth = val;},
+            CSR_HPMCOUNTER3H   => {self.hpmcounter3h = val;},
+            CSR_HPMCOUNTER4H   => {self.hpmcounter4h = val;},
+            CSR_HPMCOUNTER31H  => {self.hpmcounter31h = val;},
+            // Supervisor mode
+            CSR_SSTATUS        => {self.sstatus = val;},
+            CSR_SEDELEG        => {self.sedeleg = val;},
+            CSR_SIDELEG        => {self.sideleg = val;},
+            CSR_SIE            => {self.sie = val;},
+            CSR_STVEC          => {self.stvec = val;},
+            CSR_SCOUNTEREN     => {self.scounteren = val;},
+            CSR_SSCRATCH       => {self.sscratch = val;},
+            CSR_SEPC           => {self.sepc = val;},
+            CSR_SCAUSE         => {self.scause = val;},
+            CSR_STVAL          => {self.stval = val;},
+            CSR_SIP            => {self.sip = val;},
+            CSR_SATP           => {self.satp = val;},
+            // Machine mode
+            CSR_MVENDORID      => {self.mvendorid = val;},
+            CSR_MARCHID        => {self.marchid = val;},
+            CSR_MIMPID         => {self.mimpid = val;},
+            CSR_MHARTID        => {self.mhartid = val;},
+            CSR_MSTATUS        => {self.mstatus = val;},
+            CSR_MISA           => {self.misa = val;},
+            CSR_MEDELEG        => {self.medeleg = val;},
+            CSR_MIDELEG        => {self.mideleg = val;},
+            CSR_MIE            => {self.mie = val;},
+            CSR_MTVEC          => {self.mtvec = val;},
+            CSR_MCOUNTEREN     => {self.mcounteren = val;},
+            CSR_MSCRATCH       => {self.mscratch = val;},
+            CSR_MEPC           => {self.mepc = val;},
+            CSR_MCAUSE         => {self.mcause = val;},
+            CSR_MTVAL          => {self.mtval = val;},
+            CSR_MIP            => {self.mip = val;},
+            CSR_PMPCFG0        => {self.pmpcfg0 = val;},
+            CSR_PMPCFG1        => {self.pmpcfg1 = val;},
+            CSR_PMPCFG2        => {self.pmpcfg2 = val;},
+            CSR_PMPCFG3        => {self.pmpcfg3 = val;},
+            CSR_PMPADDR0       => {self.pmpaddr0 = val;},
+            CSR_PMPADDR1       => {self.pmpaddr1 = val;},
+            CSR_PMPADDR15      => {self.pmpaddr15 = val;},
+            CSR_MCYCLE         => {self.mcycle = val;},
+            CSR_MINSTRET       => {self.minstret = val;},
+            CSR_MHPMCOUNTER3   => {self.mhpmcounter3 = val;},
+            CSR_MHPMCOUNTER4   => {self.mhpmcounter4 = val;},
+            CSR_MHPMCOUNTER31  => {self.mhpmcounter31 = val;},
+            CSR_MCYCLEH        => {self.mcycleh = val;},
+            CSR_MINSTRETH      => {self.minstreth = val;},
+            CSR_MHPMCOUNTER3H  => {self.mhpmcounter3h = val;},
+            CSR_MHPMCOUNTER4H  => {self.mhpmcounter4h = val;},
+            CSR_MHPMCOUNTER31H => {self.mhpmcounter31h = val;},
+            CSR_MCOUNTINHIBIT  => {self.mcountinhibit = val;},
+            CSR_MHPMEVENT3     => {self.mhpmevent3 = val;},
+            CSR_MHPMEVENT4     => {self.mhpmevent4 = val;},
+            CSR_MHPMEVENT31    => {self.mhpmevent31 = val;},
+            CSR_TSELECT        => {self.tselect = val;},
+            CSR_TDATA1         => {self.tdata1 = val;},
+            CSR_TDATA2         => {self.tdata2 = val;},
+            CSR_TDATA3         => {self.tdata3 = val;},
+            // Device
+            CSR_DCSR           => {self.dcsr = val;},
+            CSR_DPC            => {self.dpc = val;},
+            CSR_DSCRATCH       => {self.dscratch = val;},
+            _ => {
+                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+                std::process::exit(1);
+            }
+        }
+    }
+}
+
 // User mode
 const CSR_USTATUS        : u32 = 0x000;
 const CSR_UIE            : u32 = 0x004;
@@ -888,282 +1166,6 @@ fn handle_jal(reg: &mut RegisterFile, inst: u32) {
     reg.pc -= 4; // increment after the handler.
 }
 
-fn get_csr(reg: &mut RegisterFile, addr: u32) -> u64 {
-    match addr {
-        // User mode
-        CSR_USTATUS        => reg.csr.ustatus,
-        CSR_UIE            => reg.csr.uie,
-        CSR_UTVEC          => reg.csr.utvec,
-        CSR_USCRATCH       => reg.csr.uscratch,
-        CSR_UEPC           => reg.csr.uepc,
-        CSR_UCAUSE         => reg.csr.ucause,
-        CSR_UTVAL          => reg.csr.utval,
-        CSR_UIP            => reg.csr.uip,
-        CSR_FFLAGS         => reg.csr.fflags,
-        CSR_FRM            => reg.csr.frm,
-        CSR_FCSR           => reg.csr.fcsr,
-        CSR_CYCLE          => reg.csr.cycle,
-        CSR_TIME           => reg.csr.time,
-        CSR_INSTRET        => reg.csr.instret,
-        CSR_HPMCOUNTER3    => reg.csr.hpmcounter3,
-        CSR_HPMCOUNTER4    => reg.csr.hpmcounter4,
-        CSR_HPMCOUNTER31   => reg.csr.hpmcounter31,
-        CSR_CYCLEH         => reg.csr.cycleh,
-        CSR_TIMEH          => reg.csr.timeh,
-        CSR_INSTRETH       => reg.csr.instreth,
-        CSR_HPMCOUNTER3H   => reg.csr.hpmcounter3h,
-        CSR_HPMCOUNTER4H   => reg.csr.hpmcounter4h,
-        CSR_HPMCOUNTER31H  => reg.csr.hpmcounter31h,
-        // Supervisor mode
-        CSR_SSTATUS        => reg.csr.sstatus,
-        CSR_SEDELEG        => reg.csr.sedeleg,
-        CSR_SIDELEG        => reg.csr.sideleg,
-        CSR_SIE            => reg.csr.sie,
-        CSR_STVEC          => reg.csr.stvec,
-        CSR_SCOUNTEREN     => reg.csr.scounteren,
-        CSR_SSCRATCH       => reg.csr.sscratch,
-        CSR_SEPC           => reg.csr.sepc,
-        CSR_SCAUSE         => reg.csr.scause,
-        CSR_STVAL          => reg.csr.stval,
-        CSR_SIP            => reg.csr.sip,
-        CSR_SATP           => reg.csr.satp,
-        // Machine mode
-        CSR_MVENDORID      => reg.csr.mvendorid,
-        CSR_MARCHID        => reg.csr.marchid,
-        CSR_MIMPID         => reg.csr.mimpid,
-        CSR_MHARTID        => reg.csr.mhartid,
-        CSR_MSTATUS        => reg.csr.mstatus,
-        CSR_MISA           => reg.csr.misa,
-        CSR_MEDELEG        => reg.csr.medeleg,
-        CSR_MIDELEG        => reg.csr.mideleg,
-        CSR_MIE            => reg.csr.mie,
-        CSR_MTVEC          => reg.csr.mtvec,
-        CSR_MCOUNTEREN     => reg.csr.mcounteren,
-        CSR_MSCRATCH       => reg.csr.mscratch,
-        CSR_MEPC           => reg.csr.mepc,
-        CSR_MCAUSE         => reg.csr.mcause,
-        CSR_MTVAL          => reg.csr.mtval,
-        CSR_MIP            => reg.csr.mip,
-        CSR_PMPCFG0        => reg.csr.pmpcfg0,
-        CSR_PMPCFG1        => reg.csr.pmpcfg1,
-        CSR_PMPCFG2        => reg.csr.pmpcfg2,
-        CSR_PMPCFG3        => reg.csr.pmpcfg3,
-        CSR_PMPADDR0       => reg.csr.pmpaddr0,
-        CSR_PMPADDR1       => reg.csr.pmpaddr1,
-        CSR_PMPADDR15      => reg.csr.pmpaddr15,
-        CSR_MCYCLE         => reg.csr.mcycle,
-        CSR_MINSTRET       => reg.csr.minstret,
-        CSR_MHPMCOUNTER3   => reg.csr.mhpmcounter3,
-        CSR_MHPMCOUNTER4   => reg.csr.mhpmcounter4,
-        CSR_MHPMCOUNTER31  => reg.csr.mhpmcounter31,
-        CSR_MCYCLEH        => reg.csr.mcycleh,
-        CSR_MINSTRETH      => reg.csr.minstreth,
-        CSR_MHPMCOUNTER3H  => reg.csr.mhpmcounter3h,
-        CSR_MHPMCOUNTER4H  => reg.csr.mhpmcounter4h,
-        CSR_MHPMCOUNTER31H => reg.csr.mhpmcounter31h,
-        CSR_MCOUNTINHIBIT  => reg.csr.mcountinhibit,
-        CSR_MHPMEVENT3     => reg.csr.mhpmevent3,
-        CSR_MHPMEVENT4     => reg.csr.mhpmevent4,
-        CSR_MHPMEVENT31    => reg.csr.mhpmevent31,
-        CSR_TSELECT        => reg.csr.tselect,
-        CSR_TDATA1         => reg.csr.tdata1,
-        CSR_TDATA2         => reg.csr.tdata2,
-        CSR_TDATA3         => reg.csr.tdata3,
-        // Device
-        CSR_DCSR           => reg.csr.dcsr,
-        CSR_DPC            => reg.csr.dpc,
-        CSR_DSCRATCH       => reg.csr.dscratch,
-        _ => {
-            writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
-            std::process::exit(1);
-        }
-    }
-}
-
-fn get_csr_name(addr: u32) -> &'static str {
-    match addr {
-        // User mode
-        CSR_USTATUS        => "ustatus",
-        CSR_UIE            => "uie",
-        CSR_UTVEC          => "utvec",
-        CSR_USCRATCH       => "uscratch",
-        CSR_UEPC           => "uepc",
-        CSR_UCAUSE         => "ucause",
-        CSR_UTVAL          => "utval",
-        CSR_UIP            => "uip",
-        CSR_FFLAGS         => "fflags",
-        CSR_FRM            => "frm",
-        CSR_FCSR           => "fcsr",
-        CSR_CYCLE          => "cycle",
-        CSR_TIME           => "time",
-        CSR_INSTRET        => "instret",
-        CSR_HPMCOUNTER3    => "hpmcounter3",
-        CSR_HPMCOUNTER4    => "hpmcounter4",
-        CSR_HPMCOUNTER31   => "hpmcounter31",
-        CSR_CYCLEH         => "cycleh",
-        CSR_TIMEH          => "timeh",
-        CSR_INSTRETH       => "instreth",
-        CSR_HPMCOUNTER3H   => "hpmcounter3h",
-        CSR_HPMCOUNTER4H   => "hpmcounter4h",
-        CSR_HPMCOUNTER31H  => "hpmcounter31h",
-        // Supervisor mode
-        CSR_SSTATUS        => "sstatus",
-        CSR_SEDELEG        => "sedeleg",
-        CSR_SIDELEG        => "sideleg",
-        CSR_SIE            => "sie",
-        CSR_STVEC          => "stvec",
-        CSR_SCOUNTEREN     => "scounteren",
-        CSR_SSCRATCH       => "sscratch",
-        CSR_SEPC           => "sepc",
-        CSR_SCAUSE         => "scause",
-        CSR_STVAL          => "stval",
-        CSR_SIP            => "sip",
-        CSR_SATP           => "satp",
-        // Machine mode
-        CSR_MVENDORID      => "mvendorid",
-        CSR_MARCHID        => "marchid",
-        CSR_MIMPID         => "mimpid",
-        CSR_MHARTID        => "mhartid",
-        CSR_MSTATUS        => "mstatus",
-        CSR_MISA           => "misa",
-        CSR_MEDELEG        => "medeleg",
-        CSR_MIDELEG        => "mideleg",
-        CSR_MIE            => "mie",
-        CSR_MTVEC          => "mtvec",
-        CSR_MCOUNTEREN     => "mcounteren",
-        CSR_MSCRATCH       => "mscratch",
-        CSR_MEPC           => "mepc",
-        CSR_MCAUSE         => "mcause",
-        CSR_MTVAL          => "mtval",
-        CSR_MIP            => "mip",
-        CSR_PMPCFG0        => "pmpcfg0",
-        CSR_PMPCFG1        => "pmpcfg1",
-        CSR_PMPCFG2        => "pmpcfg2",
-        CSR_PMPCFG3        => "pmpcfg3",
-        CSR_PMPADDR0       => "pmpaddr0",
-        CSR_PMPADDR1       => "pmpaddr1",
-        CSR_PMPADDR15      => "pmpaddr15",
-        CSR_MCYCLE         => "mcycle",
-        CSR_MINSTRET       => "minstret",
-        CSR_MHPMCOUNTER3   => "mhpmcounter3",
-        CSR_MHPMCOUNTER4   => "mhpmcounter4",
-        CSR_MHPMCOUNTER31  => "mhpmcounter31",
-        CSR_MCYCLEH        => "mcycleh",
-        CSR_MINSTRETH      => "minstreth",
-        CSR_MHPMCOUNTER3H  => "mhpmcounter3h",
-        CSR_MHPMCOUNTER4H  => "mhpmcounter4h",
-        CSR_MHPMCOUNTER31H => "mhpmcounter31h",
-        CSR_MCOUNTINHIBIT  => "mcountinhibit",
-        CSR_MHPMEVENT3     => "mhpmevent3",
-        CSR_MHPMEVENT4     => "mhpmevent4",
-        CSR_MHPMEVENT31    => "mhpmevent31",
-        CSR_TSELECT        => "tselect",
-        CSR_TDATA1         => "tdata1",
-        CSR_TDATA2         => "tdata2",
-        CSR_TDATA3         => "tdata3",
-        // Device
-        CSR_DCSR           => "dcsr",
-        CSR_DPC            => "dpc",
-        CSR_DSCRATCH       => "dscratch",
-        _ => {
-            writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
-            std::process::exit(1);
-        }
-    }
-}
-
-fn set_csr(reg: &mut RegisterFile, addr: u32, val: u64) {
-    match addr {
-        // User mode
-        CSR_USTATUS        => {reg.csr.ustatus = val;},
-        CSR_UIE            => {reg.csr.uie = val;},
-        CSR_UTVEC          => {reg.csr.utvec = val;},
-        CSR_USCRATCH       => {reg.csr.uscratch = val;},
-        CSR_UEPC           => {reg.csr.uepc = val;},
-        CSR_UCAUSE         => {reg.csr.ucause = val;},
-        CSR_UTVAL          => {reg.csr.utval = val;},
-        CSR_UIP            => {reg.csr.uip = val;},
-        CSR_FFLAGS         => {reg.csr.fflags = val;},
-        CSR_FRM            => {reg.csr.frm = val;},
-        CSR_FCSR           => {reg.csr.fcsr = val;},
-        CSR_CYCLE          => {reg.csr.cycle = val;},
-        CSR_TIME           => {reg.csr.time = val;},
-        CSR_INSTRET        => {reg.csr.instret = val;},
-        CSR_HPMCOUNTER3    => {reg.csr.hpmcounter3 = val;},
-        CSR_HPMCOUNTER4    => {reg.csr.hpmcounter4 = val;},
-        CSR_HPMCOUNTER31   => {reg.csr.hpmcounter31 = val;},
-        CSR_CYCLEH         => {reg.csr.cycleh = val;},
-        CSR_TIMEH          => {reg.csr.timeh = val;},
-        CSR_INSTRETH       => {reg.csr.instreth = val;},
-        CSR_HPMCOUNTER3H   => {reg.csr.hpmcounter3h = val;},
-        CSR_HPMCOUNTER4H   => {reg.csr.hpmcounter4h = val;},
-        CSR_HPMCOUNTER31H  => {reg.csr.hpmcounter31h = val;},
-        // Supervisor mode
-        CSR_SSTATUS        => {reg.csr.sstatus = val;},
-        CSR_SEDELEG        => {reg.csr.sedeleg = val;},
-        CSR_SIDELEG        => {reg.csr.sideleg = val;},
-        CSR_SIE            => {reg.csr.sie = val;},
-        CSR_STVEC          => {reg.csr.stvec = val;},
-        CSR_SCOUNTEREN     => {reg.csr.scounteren = val;},
-        CSR_SSCRATCH       => {reg.csr.sscratch = val;},
-        CSR_SEPC           => {reg.csr.sepc = val;},
-        CSR_SCAUSE         => {reg.csr.scause = val;},
-        CSR_STVAL          => {reg.csr.stval = val;},
-        CSR_SIP            => {reg.csr.sip = val;},
-        CSR_SATP           => {reg.csr.satp = val;},
-        // Machine mode
-        CSR_MVENDORID      => {reg.csr.mvendorid = val;},
-        CSR_MARCHID        => {reg.csr.marchid = val;},
-        CSR_MIMPID         => {reg.csr.mimpid = val;},
-        CSR_MHARTID        => {reg.csr.mhartid = val;},
-        CSR_MSTATUS        => {reg.csr.mstatus = val;},
-        CSR_MISA           => {reg.csr.misa = val;},
-        CSR_MEDELEG        => {reg.csr.medeleg = val;},
-        CSR_MIDELEG        => {reg.csr.mideleg = val;},
-        CSR_MIE            => {reg.csr.mie = val;},
-        CSR_MTVEC          => {reg.csr.mtvec = val;},
-        CSR_MCOUNTEREN     => {reg.csr.mcounteren = val;},
-        CSR_MSCRATCH       => {reg.csr.mscratch = val;},
-        CSR_MEPC           => {reg.csr.mepc = val;},
-        CSR_MCAUSE         => {reg.csr.mcause = val;},
-        CSR_MTVAL          => {reg.csr.mtval = val;},
-        CSR_MIP            => {reg.csr.mip = val;},
-        CSR_PMPCFG0        => {reg.csr.pmpcfg0 = val;},
-        CSR_PMPCFG1        => {reg.csr.pmpcfg1 = val;},
-        CSR_PMPCFG2        => {reg.csr.pmpcfg2 = val;},
-        CSR_PMPCFG3        => {reg.csr.pmpcfg3 = val;},
-        CSR_PMPADDR0       => {reg.csr.pmpaddr0 = val;},
-        CSR_PMPADDR1       => {reg.csr.pmpaddr1 = val;},
-        CSR_PMPADDR15      => {reg.csr.pmpaddr15 = val;},
-        CSR_MCYCLE         => {reg.csr.mcycle = val;},
-        CSR_MINSTRET       => {reg.csr.minstret = val;},
-        CSR_MHPMCOUNTER3   => {reg.csr.mhpmcounter3 = val;},
-        CSR_MHPMCOUNTER4   => {reg.csr.mhpmcounter4 = val;},
-        CSR_MHPMCOUNTER31  => {reg.csr.mhpmcounter31 = val;},
-        CSR_MCYCLEH        => {reg.csr.mcycleh = val;},
-        CSR_MINSTRETH      => {reg.csr.minstreth = val;},
-        CSR_MHPMCOUNTER3H  => {reg.csr.mhpmcounter3h = val;},
-        CSR_MHPMCOUNTER4H  => {reg.csr.mhpmcounter4h = val;},
-        CSR_MHPMCOUNTER31H => {reg.csr.mhpmcounter31h = val;},
-        CSR_MCOUNTINHIBIT  => {reg.csr.mcountinhibit = val;},
-        CSR_MHPMEVENT3     => {reg.csr.mhpmevent3 = val;},
-        CSR_MHPMEVENT4     => {reg.csr.mhpmevent4 = val;},
-        CSR_MHPMEVENT31    => {reg.csr.mhpmevent31 = val;},
-        CSR_TSELECT        => {reg.csr.tselect = val;},
-        CSR_TDATA1         => {reg.csr.tdata1 = val;},
-        CSR_TDATA2         => {reg.csr.tdata2 = val;},
-        CSR_TDATA3         => {reg.csr.tdata3 = val;},
-        // Device
-        CSR_DCSR           => {reg.csr.dcsr = val;},
-        CSR_DPC            => {reg.csr.dpc = val;},
-        CSR_DSCRATCH       => {reg.csr.dscratch = val;},
-        _ => {
-            writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
-            std::process::exit(1);
-        }
-    }
-}
-
 fn handle_system(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_ECALL_EBREAK : u32 = 0b000;
     const FUNCT3_CSRRW        : u32 = 0b001;
@@ -1185,8 +1187,8 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
     let csr_addr = get_imm12(inst);
-    let csr_val = get_csr(reg, csr_addr);
-    let csr_name = get_csr_name(csr_addr);
+    let csr_val = reg.csr.get(csr_addr);
+    let csr_name = ControlStatusRegister::get_name(csr_addr);
     let mpp = ((reg.csr.mstatus >> 11) & 0b11) as u8;
 
     match funct3 {
@@ -1229,7 +1231,7 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_CSRRW        => {
             info!("csrrw {},{},{}", ABI_NAME[rd], csr_name, ABI_NAME[rs1]);
             let new_val = reg.x[rs1];
-            set_csr(reg, csr_addr, new_val);
+            reg.csr.set(csr_addr, new_val);
             if rd != 0 {
                 reg.x[rd] = csr_val;
             }
@@ -1237,7 +1239,7 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_CSRRS        => {
             info!("csrrs {},{},{}", ABI_NAME[rd], csr_name, ABI_NAME[rs1]);
             let new_val = csr_val | reg.x[rs1];
-            set_csr(reg, csr_addr, new_val);
+            reg.csr.set(csr_addr, new_val);
             if rd != 0 {
                 reg.x[rd] = csr_val;
             }
@@ -1249,7 +1251,7 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
                 reg.x[rd] = csr_val;
             }
             let new_val = rs1 as u64;
-            set_csr(reg, csr_addr, new_val);
+            reg.csr.set(csr_addr, new_val);
         }
         FUNCT3_CSRRSI       => unimplemented!(),
         FUNCT3_CSRRCI       => unimplemented!(),
