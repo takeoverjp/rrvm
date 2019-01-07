@@ -5,6 +5,9 @@ extern crate getopts;
 extern crate memmap;
 extern crate hex;
 
+mod encodings;
+use encodings::*;
+
 use std::{env, process};
 use std::io::Write;
 use std::fs::File;
@@ -12,60 +15,6 @@ use getopts::Options;
 use memmap::MmapOptions;
 
 const XLEN: u32 = 64;
-
-const OPCODE_MASK : u32 = 0b00000000_00000000_00000000_01111100;
-const RD_MASK     : u32 = 0b00000000_00000000_00001111_10000000;
-const FUNCT3_MASK : u32 = 0b00000000_00000000_01110000_00000000;
-const RS1_MASK    : u32 = 0b00000000_00001111_10000000_00000000;
-const IMM12_MASK  : u32 = 0b11111111_11110000_00000000_00000000;
-const RS2_MASK    : u32 = 0b00000001_11110000_00000000_00000000;
-const SHAMT_MASK  : u32 = 0b00000011_11110000_00000000_00000000;
-const FUNCT7_MASK : u32 = 0b11111110_00000000_00000000_00000000;
-const FENCE_PRED_MASK : u32 = 0b00001111_00000000_00000000_00000000;
-const FENCE_SUCC_MASK : u32 = 0b00000000_11110000_00000000_00000000;
-const OPCODE_SHIFT : u8 = 2;
-const RD_SHIFT     : u8 = 7;
-const FUNCT3_SHIFT : u8 = 12;
-const RS1_SHIFT    : u8 = 15;
-const IMM12_SHIFT  : u8 = 20;
-const RS2_SHIFT    : u8 = 20;
-const SHAMT_SHIFT  : u8 = 20;
-const FUNCT7_SHIFT : u8 = 25;
-const FENCE_PRED_SHIFT : u8 = 24;
-const FENCE_SUCC_SHIFT : u8 = 20;
-
-const LOAD          : u32 = 0b00_000;
-const LOAD_FP       : u32 = 0b00_001;
-const CUSTOM_0      : u32 = 0b00_010;
-const MISC_MEM      : u32 = 0b00_011;
-const OP_IMM        : u32 = 0b00_100;
-const AUIPC         : u32 = 0b00_101;
-const OP_IMM_32     : u32 = 0b00_110;
-const LONG_OP_48    : u32 = 0b00_111;
-const STORE         : u32 = 0b01_000;
-const STORE_FP      : u32 = 0b01_001;
-const CUSTOM_1      : u32 = 0b01_010;
-const AMO           : u32 = 0b01_011;
-const OP            : u32 = 0b01_100;
-const LUI           : u32 = 0b01_101;
-const OP_32         : u32 = 0b01_110;
-const LONG_OP_64    : u32 = 0b01_111;
-const MADD          : u32 = 0b10_000;
-const MSUB          : u32 = 0b10_001;
-const NMSUB         : u32 = 0b10_010;
-const NMADD         : u32 = 0b10_011;
-const OP_FP         : u32 = 0b10_100;
-//const RESERVED      : u32 = 0b10_101;
-const CUSTOM2       : u32 = 0b10_110;
-const LONG_OP_48_2  : u32 = 0b10_111;
-const BRANCH        : u32 = 0b11_000;
-const JALR          : u32 = 0b11_001;
-//const RESERVED      : u32 = 0b11_010;
-const JAL           : u32 = 0b11_011;
-const SYSTEM        : u32 = 0b11_100;
-//const RESERVED      : u32 = 0b11_101;
-const CUSTOM3       : u32 = 0b11_110;
-const LONG_OP_GE_80 : u32 = 0b11_111;
 
 #[derive(Debug)]
 struct Args {
@@ -385,46 +334,6 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
     };
 
     mmap
-}
-
-fn get_opcode(inst: u32) -> u32 {
-    (inst & OPCODE_MASK) >> OPCODE_SHIFT
-}
-
-fn get_rd(inst: u32) -> u32 {
-    (inst & RD_MASK) >> RD_SHIFT
-}
-
-fn get_funct3(inst: u32) -> u32 {
-    (inst & FUNCT3_MASK) >> FUNCT3_SHIFT
-}
-
-fn get_rs1(inst: u32) -> u32 {
-    (inst & RS1_MASK) >> RS1_SHIFT
-}
-
-fn get_imm12(inst: u32) -> u32 {
-    (inst & IMM12_MASK) >> IMM12_SHIFT
-}
-
-fn get_rs2(inst: u32) -> u32 {
-    (inst & RS2_MASK) >> RS2_SHIFT
-}
-
-fn get_shamt(inst: u32) -> u32 {
-    (inst & SHAMT_MASK) >> SHAMT_SHIFT
-}
-
-fn get_funct7(inst: u32) -> u32 {
-    (inst & FUNCT7_MASK) >> FUNCT7_SHIFT
-}
-
-fn get_fence_pred(inst: u32) -> u32 {
-    (inst & FENCE_PRED_MASK) >> FENCE_PRED_SHIFT
-}
-
-fn get_fence_succ(inst: u32) -> u32 {
-    (inst & FENCE_SUCC_MASK) >> FENCE_SUCC_SHIFT
 }
 
 fn fetch(map: &memmap::Mmap, pc: usize) -> u32 {
