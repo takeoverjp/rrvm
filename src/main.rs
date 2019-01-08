@@ -7,6 +7,7 @@ extern crate hex;
 
 mod encodings;
 mod csr;
+mod elf;
 
 use encodings::*;
 use csr::*;
