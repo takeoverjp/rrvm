@@ -11,6 +11,7 @@ mod elf;
 
 use encodings::*;
 use csr::*;
+use elf::*;
 
 use std::{env, process};
 use std::io::Write;
@@ -842,6 +843,12 @@ fn main() {
     let mut mem = map.to_vec();
     unsafe {
         mem.set_len(args.memory);
+    }
+
+    let hdr = ElfHeader::new(&mem);
+    if hdr.is_elf() {
+        writeln!(std::io::stderr(), "Elf is not supported yet");
+        std::process::exit(1);
     }
 
     loop {

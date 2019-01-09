@@ -1,4 +1,4 @@
-struct ElfHeader {
+pub struct ElfHeader {
     e_ident: [u8; 4],
     e_type: u8,
     e_machine: u8,
