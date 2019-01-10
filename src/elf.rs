@@ -21,7 +21,7 @@ impl ElfHeader {
         }
 
     }
-    pub fn is_elf(self) -> bool {
+    pub fn is_elf(&self) -> bool {
         self.ei_magic == [0x7f, b'E', b'L', b'F']
     }
 }
