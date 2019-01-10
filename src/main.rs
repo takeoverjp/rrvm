@@ -848,6 +848,7 @@ fn main() {
     let hdr = ElfHeader::new(&mem);
     if hdr.is_elf() {
         writeln!(std::io::stderr(), "Elf is not supported yet");
+        writeln!(std::io::stderr(), "{:?}", hdr);
         writeln!(std::io::stderr(), "{}", hdr);
         std::process::exit(1);
     }
