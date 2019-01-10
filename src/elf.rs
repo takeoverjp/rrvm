@@ -28,7 +28,7 @@ impl ElfHeader {
 
 impl fmt::Display for ElfHeader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.ei_magic != [0x7f, b'E', b'L', b'F'] {
+        if self.is_elf() {
             return Ok(());
         }
 
