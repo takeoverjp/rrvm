@@ -10,6 +10,7 @@ pub struct ElfHeader {
     ei_abiversion: u8,
     _ei_pad: [u8; 7],
     e_type: u16,
+    e_machine: u16,
 }
 
 impl ElfHeader {
@@ -23,6 +24,7 @@ impl ElfHeader {
             ei_abiversion: bin[8],
             _ei_pad: [0; 7],
             e_type: (bin[0x10] as u16) | (bin[0x11] as u16) << 8,
+            e_machine: (bin[0x11] as u16) | (bin[0x12] as u16) << 8,
         }
 
     }
@@ -68,6 +70,20 @@ impl ElfHeader {
             _ => "unknown",
         }
     }
+
+    fn machine2str(&self) -> &str {
+        match self.e_machine {
+            0x00 => "No specific",
+            0x02 => "SPARC",
+            0x03 => "x86",
+            0x28 => "ARM",
+            0x32 => "IA-64",
+            0x3E => "x86-64",
+            0xB7 => "AArch64",
+            0xF300 => "RISC-V", // TODO: Really??? 0xF3???
+            _ => "unknown",
+        }
+    }
 }
 
 impl fmt::Display for ElfHeader {
@@ -82,13 +98,15 @@ impl fmt::Display for ElfHeader {
   ei_version: {}
   ei_osabi: {}
   ei_abiversion: {}
-  e_type: {}",
+  e_type: {}
+  e_machine: {}",
                self.class2str(),
                self.data2str(),
                self.version2str(),
                self.osabi2str(),
                self.ei_abiversion,
                self.type2str(),
+               self.machine2str(),
         )
     }
 }
