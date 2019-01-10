@@ -29,7 +29,7 @@ impl ElfHeader {
 impl fmt::Display for ElfHeader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if ! self.is_elf() {
-            return Ok(());
+            return write!(f, "not ELF");
         }
 
         write!(f, r"== ELF ==
