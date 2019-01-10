@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Debug)]
 pub struct ElfHeader {
     ei_magic: [u8; 4],
     ei_class: u8,
