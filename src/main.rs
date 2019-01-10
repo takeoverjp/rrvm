@@ -814,7 +814,7 @@ fn parse_args() -> Args {
 
     let offset = match matches.opt_str("o") {
         Some(value) => value,
-        None => String::from("0")
+        None => String::from("0x00000000")
     };
     let offset = str2u64(&offset);
 
