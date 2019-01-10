@@ -69,7 +69,7 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
     let file = match File::open(file_path) {
         Ok(file) => file,
         Err(e) => {
-            writeln!(std::io::stderr(), "file({}) open error {:?}", file_path, e);
+            writeln!(std::io::stderr(), "file({}) open error {:?}", file_path, e).unwrap();
             std::process::exit(1);
         }
     };
@@ -78,7 +78,7 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
         match MmapOptions::new().map(&file) {
             Ok(map) => map,
             Err(e) => {
-                writeln!(std::io::stderr(), "memmap error {:?}", e);
+                writeln!(std::io::stderr(), "memmap error {:?}", e).unwrap();
                 std::process::exit(1);
             }
         }
@@ -353,10 +353,10 @@ fn mmio_store(addr: u64, val: u64) {
         },
         RISCV_TESTS_TOHOST => {
             if val == 1 {
-                writeln!(std::io::stderr(), "@@@ riscv-tests: success");
+                writeln!(std::io::stderr(), "@@@ riscv-tests: success").unwrap();
                 std::process::exit(0);
             } else {
-                writeln!(std::io::stderr(), "@@@ riscv-tests: failed {:?}", val >> 1);
+                writeln!(std::io::stderr(), "@@@ riscv-tests: failed {:?}", val >> 1).unwrap();
                 std::process::exit(1);
             }
         },
@@ -763,7 +763,7 @@ fn str2u64(numstr: &str) -> u64 {
                 return offset;
             }
             Err(e) => {
-                writeln!(std::io::stderr(), "decode {:?} failed: {:?}", numstr, e);
+                writeln!(std::io::stderr(), "decode {:?} failed: {:?}", numstr, e).unwrap();
                 std::process::exit(1);
             }
         };
@@ -847,9 +847,9 @@ fn main() {
 
     let hdr = ElfHeader::new(&mem);
     if hdr.is_elf() {
-        writeln!(std::io::stderr(), "Elf is not supported yet");
-        writeln!(std::io::stderr(), "{:?}", hdr);
-        writeln!(std::io::stderr(), "{}", hdr);
+        writeln!(std::io::stderr(), "Elf is not supported yet").unwrap();
+        writeln!(std::io::stderr(), "{:?}", hdr).unwrap();
+        writeln!(std::io::stderr(), "{}", hdr).unwrap();
         std::process::exit(1);
     }
 

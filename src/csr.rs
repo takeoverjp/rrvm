@@ -345,7 +345,7 @@ impl ControlStatusRegister {
             CSR_DPC            => "dpc",
             CSR_DSCRATCH       => "dscratch",
             _ => {
-                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr).unwrap();
                 std::process::exit(1);
             }
         }
@@ -437,7 +437,7 @@ impl ControlStatusRegister {
             CSR_DPC            => self.dpc,
             CSR_DSCRATCH       => self.dscratch,
             _ => {
-                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr).unwrap();
                 std::process::exit(1);
             }
         }
@@ -529,7 +529,7 @@ impl ControlStatusRegister {
             CSR_DPC            => {self.dpc = val;},
             CSR_DSCRATCH       => {self.dscratch = val;},
             _ => {
-                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr);
+                writeln!(std::io::stderr(), "{}: {}: unknown csr addr 0x{:x}", file!(), line!(), addr).unwrap();
                 std::process::exit(1);
             }
         }
