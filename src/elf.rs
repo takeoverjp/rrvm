@@ -23,8 +23,8 @@ impl ElfHeader {
             ei_osabi: bin[7],
             ei_abiversion: bin[8],
             _ei_pad: [0; 7],
-            e_type: (bin[0x10] as u16) | (bin[0x11] as u16) << 8,
-            e_machine: (bin[0x12] as u16) | (bin[0x13] as u16) << 8,
+            e_type: sli2u16(&bin[0x10..0x12]),
+            e_machine: sli2u16(&bin[0x12..0x14]),
         }
 
     }
@@ -126,4 +126,16 @@ mod test_elf {
         let hdr = ElfHeader::new(&bin);
         assert_eq!(true, hdr.is_elf());
     }
+}
+
+
+fn sli2u16(s: &[u8]) -> u16 {
+    assert_eq!(2, s.len());
+    (s[0] as u16) | (s[1] as u16) << 8
+}
+
+#[test]
+fn test_sli2u16() {
+    let ret = sli2u16(&[0xab, 0xcd]);
+    assert_eq!(0xcdab, ret, "0x{:04x}", ret);
 }
