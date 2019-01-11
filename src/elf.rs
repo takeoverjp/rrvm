@@ -24,7 +24,7 @@ impl ElfHeader {
             ei_abiversion: bin[8],
             _ei_pad: [0; 7],
             e_type: (bin[0x10] as u16) | (bin[0x11] as u16) << 8,
-            e_machine: (bin[0x11] as u16) | (bin[0x12] as u16) << 8,
+            e_machine: (bin[0x12] as u16) | (bin[0x13] as u16) << 8,
         }
 
     }
@@ -80,7 +80,7 @@ impl ElfHeader {
             0x32 => "IA-64",
             0x3E => "x86-64",
             0xB7 => "AArch64",
-            0xF300 => "RISC-V", // TODO: Really??? 0xF3???
+            0xF3 => "RISC-V",
             _ => "unknown",
         }
     }
