@@ -11,6 +11,11 @@ pub struct ElfHeader {
     _ei_pad: [u8; 7],
     e_type: u16,
     e_machine: u16,
+    e_version: u32,
+    e_entry: u64,
+    e_phoff: u64,
+    e_shoff: u64,
+    e_flags: u32,
 }
 
 impl ElfHeader {
@@ -25,6 +30,11 @@ impl ElfHeader {
             _ei_pad: [0; 7],
             e_type: sli2u16(&bin[0x10..0x12]),
             e_machine: sli2u16(&bin[0x12..0x14]),
+            e_version: sli2u32(&bin[0x14..0x18]),
+            e_entry: sli2u64(&bin[0x18..0x20]),
+            e_phoff: sli2u64(&bin[0x20..0x28]),
+            e_shoff: sli2u64(&bin[0x28..0x30]),
+            e_flags: sli2u32(&bin[0x30..0x34]),
         }
 
     }
@@ -122,6 +132,9 @@ mod test_elf {
                        0, 0, 0, 0, 0, 0, 0, 0,
                        0, 0, 0, 0, 0, 0, 0, 0,
                        0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0,
         ];
         let hdr = ElfHeader::new(&bin);
         assert_eq!(true, hdr.is_elf());
@@ -134,8 +147,32 @@ fn sli2u16(s: &[u8]) -> u16 {
     (s[0] as u16) | (s[1] as u16) << 8
 }
 
+fn sli2u32(s: &[u8]) -> u32 {
+    assert_eq!(4, s.len());
+    (s[0] as u32) | (s[1] as u32) << 8 | (s[2] as u32) << 16 | (s[3] as u32) << 24
+}
+
+fn sli2u64(s: &[u8]) -> u64 {
+    assert_eq!(8, s.len());
+    (s[0] as u64) | (s[1] as u64) << 8 | (s[2] as u64) << 16 | (s[3] as u64) << 24
+    | (s[4] as u64) << 32 | (s[5] as u64) << 40 | (s[6] as u64) << 48 | (s[7] as u64) << 56
+}
+
 #[test]
 fn test_sli2u16() {
     let ret = sli2u16(&[0xab, 0xcd]);
     assert_eq!(0xcdab, ret, "0x{:04x}", ret);
+}
+
+#[test]
+fn test_sli2u32() {
+    let ret = sli2u32(&[0x12, 0x34, 0xab, 0xcd]);
+    assert_eq!(0xcdab3412, ret, "0x{:08x}", ret);
+}
+
+#[test]
+fn test_sli2u64() {
+    let ret = sli2u64(&[0x01, 0x23, 0x45, 0x67,
+                        0x89, 0xab, 0xcd, 0xef]);
+    assert_eq!(0xefcdab8967452301, ret, "0x{:016x}", ret);
 }
