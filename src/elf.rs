@@ -25,7 +25,7 @@ pub struct ElfHeader {
 }
 
 impl ElfHeader {
-    pub fn new(bin: &Vec<u8>) -> ElfHeader {
+    pub fn new(bin: &[u8]) -> ElfHeader {
         ElfHeader {
             ei_magic:      [bin[0], bin[1], bin[2], bin[3]],
             ei_class:      bin[4],
@@ -165,18 +165,36 @@ mod test_elf_header {
     use super::*;
 
     #[test]
-    fn test_is_elf() {
-        let bin = vec![0x7f, b'E', b'L', b'F', 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
+    fn test_new() {
+        let bin = [0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01, 0x01, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x02, 0x00, 0xf3, 0x00, 0x01, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00,
+                   0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0xa0, 0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x38, 0x00,
+                   0x02, 0x00, 0x40, 0x00, 0x06, 0x00, 0x05, 0x00,
         ];
         let hdr = ElfHeader::new(&bin);
-        assert_eq!(true, hdr.is_elf());
+        assert_eq!(true,                     hdr.is_elf());
+        assert_eq!("ELF64",                  hdr.class2str());
+        assert_eq!("little endian",          hdr.data2str());
+        assert_eq!("1 (current)",            hdr.version2str());
+        assert_eq!("UNIX - System V",        hdr.osabi2str());
+        assert_eq!(0,                        hdr.ei_abiversion);
+        assert_eq!("EXEC (Executable file)", hdr.type2str());
+        assert_eq!("RISC-V",                 hdr.machine2str());
+        assert_eq!(0x1,                      hdr.e_version);
+        assert_eq!(0x8000_0000,              hdr.e_entry);
+        assert_eq!(64,                       hdr.e_phoff);
+        assert_eq!(9632,                     hdr.e_shoff);
+        assert_eq!(0x0,                      hdr.e_flags);
+        assert_eq!(64,                       hdr.e_ehsize);
+        assert_eq!(56,                       hdr.e_phentsize);
+        assert_eq!(2,                        hdr.e_phnum);
+        assert_eq!(64,                       hdr.e_shentsize);
+        assert_eq!(6,                        hdr.e_shnum);
+        assert_eq!(5,                        hdr.e_shstrndx);
     }
 }
 
@@ -196,7 +214,7 @@ pub struct SectionHeader {
 }
 
 impl SectionHeader {
-    pub fn new(bin: &Vec<u8>) -> SectionHeader {
+    pub fn new(bin: &[u8]) -> SectionHeader {
         SectionHeader {
             sh_name:      [bin[0], bin[1], bin[2], bin[3]],
             sh_type:      sli2u32(&bin[0x04..0x08]),
@@ -263,14 +281,14 @@ mod test_section_header {
 
     #[test]
     fn test_new() {
-        let bin = vec![0x11, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x6d, 0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x2e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,];
+        let bin = [0x11, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x6d, 0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x2e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,];
         let sec = SectionHeader::new(&bin);
         assert_eq!(0x256d, sec.sh_offset);
         assert_eq!(0x2e, sec.sh_size);
