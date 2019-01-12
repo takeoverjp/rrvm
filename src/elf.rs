@@ -161,7 +161,7 @@ impl fmt::Display for ElfHeader {
 }
 
 #[cfg(test)]
-mod test_elf {
+mod test_elf_header {
     use super::*;
 
     #[test]
@@ -180,6 +180,102 @@ mod test_elf {
     }
 }
 
+
+#[derive(Debug)]
+pub struct SectionHeader {
+    sh_name:      [u8; 4],
+    sh_type:      u32,
+    sh_flags:     u64,
+    sh_addr:      u64,
+    sh_offset:    u64,
+    sh_size:      u64,
+    sh_link:      u32,
+    sh_info:      u32,
+    sh_addralign: u64,
+    sh_entsize:   u64,
+}
+
+impl SectionHeader {
+    pub fn new(bin: &Vec<u8>) -> SectionHeader {
+        SectionHeader {
+            sh_name:      [bin[0], bin[1], bin[2], bin[3]],
+            sh_type:      sli2u32(&bin[0x04..0x08]),
+            sh_flags:     sli2u64(&bin[0x08..0x10]),
+            sh_addr:      sli2u64(&bin[0x10..0x18]),
+            sh_offset:    sli2u64(&bin[0x18..0x20]),
+            sh_size:      sli2u64(&bin[0x20..0x28]),
+            sh_link:      sli2u32(&bin[0x28..0x2c]),
+            sh_info:      sli2u32(&bin[0x2c..0x30]),
+            sh_addralign: sli2u64(&bin[0x30..0x38]),
+            sh_entsize:   sli2u64(&bin[0x38..0x40]),
+        }
+    }
+
+    fn type2str(&self) -> &str {
+        match self.sh_type {
+            0x0 =>        "NULL",
+            0x1 =>        "PROGBITS",
+            0x2 =>        "SYMTAB",
+            0x3 =>        "STRTAB",
+            0x4 =>        "RELA",
+            0x5 =>        "HASH",
+            0x6 =>        "DYNAMIC",
+            0x7 =>        "NOTE",
+            0x8 =>        "NOBITS",
+            0x9 =>        "REL",
+            0x0A =>       "SHLIB",
+            0x0B =>       "DYNSYM",
+            0x0E =>       "INIT_ARRAY",
+            0x0F =>       "FINI_ARRAY",
+            0x10 =>       "PREINIT_ARRAY",
+            0x11 =>       "GROUP",
+            0x12 =>       "SYMTAB_SHNDX",
+            0x13 =>       "NUM",
+            0x60000000 => "LOO",
+            _ =>          "unknown",
+        }
+    }
+}
+
+impl fmt::Display for SectionHeader {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, r"Section Headers:
+  [Nr] Name              Type             Address           Offset
+       Size              EntSize          Flags  Link  Info  Align
+  [{:2}] {:16} {:16} {:016x} {:08x}
+       {:016x} {:016x} {:6} {:4x} {:5} {:6}",
+               "??", "????",
+               self.type2str(),
+               self.sh_addr,
+               self.sh_offset,
+               self.sh_size,
+               self.sh_entsize,
+               self.sh_flags,
+               self.sh_link,
+               self.sh_info,
+               self.sh_addralign)
+    }
+}
+
+#[cfg(test)]
+mod test_section_header {
+    use super::*;
+
+    #[test]
+    fn test_new() {
+        let bin = vec![0x11, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x6d, 0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x2e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,];
+        let sec = SectionHeader::new(&bin);
+        assert_eq!(0x256d, sec.sh_offset);
+        assert_eq!(0x2e, sec.sh_size);
+    }
+}
 
 fn sli2u16(s: &[u8]) -> u16 {
     assert_eq!(2, s.len());
