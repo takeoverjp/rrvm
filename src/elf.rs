@@ -54,6 +54,10 @@ impl ElfHeader {
         self.ei_magic == [0x7f, b'E', b'L', b'F']
     }
 
+    pub fn entry_point_address(&self) -> u64 {
+        self.e_entry
+    }
+
     fn class2str(&self) -> &str {
         match self.ei_class {
             1 => "ELF32",
