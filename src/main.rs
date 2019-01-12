@@ -845,12 +845,12 @@ fn main() {
         mem.set_len(args.memory);
     }
 
-    let hdr = ElfHeader::new(&mem);
-    if hdr.is_elf() {
+    let elf = Elf::new(&mem);
+    if elf.is_elf() {
         writeln!(std::io::stderr(), "Elf is not supported yet").unwrap();
-        args.offset = hdr.entry_point_address();
+        args.offset = elf.entry_point_address();
         writeln!(std::io::stderr(), "offset = 0x{:x}", args.offset).unwrap();
-        writeln!(std::io::stderr(), "{}", hdr).unwrap();
+        writeln!(std::io::stderr(), "{}", elf).unwrap();
         std::process::exit(1);
     }
 

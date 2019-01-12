@@ -1,6 +1,43 @@
 use std::fmt;
 
 #[derive(Debug)]
+pub struct Elf {
+    hdr: ElfHeader,
+    sec: Vec<SectionHeader>,
+}
+
+impl Elf {
+    pub fn new(bin: &[u8]) -> Elf {
+        let mut this = Elf {
+            hdr: ElfHeader::new(&bin[0..0x40]),
+            sec: vec![],
+        };
+
+        this.sec.push(SectionHeader::new(&bin[0x26e0..]));
+
+        this
+    }
+
+    pub fn is_elf(&self) -> bool {
+        self.hdr.is_elf()
+    }
+
+    pub fn entry_point_address(&self) -> u64 {
+        self.hdr.entry_point_address()
+    }
+}
+
+impl fmt::Display for Elf {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if ! self.hdr.is_elf() {
+            return write!(f, "not ELF");
+        }
+
+        write!(f, r"{}", self.hdr)
+    }
+}
+
+#[derive(Debug)]
 pub struct ElfHeader {
     ei_magic:      [u8; 4],
     ei_class:      u8,
