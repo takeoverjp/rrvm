@@ -2,39 +2,51 @@ use std::fmt;
 
 #[derive(Debug)]
 pub struct ElfHeader {
-    ei_magic: [u8; 4],
-    ei_class: u8,
-    ei_data: u8,
-    ei_version: u8,
-    ei_osabi: u8,
+    ei_magic:      [u8; 4],
+    ei_class:      u8,
+    ei_data:       u8,
+    ei_version:    u8,
+    ei_osabi:      u8,
     ei_abiversion: u8,
-    _ei_pad: [u8; 7],
-    e_type: u16,
-    e_machine: u16,
-    e_version: u32,
-    e_entry: u64,
-    e_phoff: u64,
-    e_shoff: u64,
-    e_flags: u32,
+    _ei_pad:       [u8; 7],
+    e_type:        u16,
+    e_machine:     u16,
+    e_version:     u32,
+    e_entry:       u64,
+    e_phoff:       u64,
+    e_shoff:       u64,
+    e_flags:       u32,
+    e_ehsize:      u16,
+    e_phentsize:   u16,
+    e_phnum:       u16,
+    e_shentsize:   u16,
+    e_shnum:       u16,
+    e_shstrndx:    u16,
 }
 
 impl ElfHeader {
     pub fn new(bin: &Vec<u8>) -> ElfHeader {
         ElfHeader {
-            ei_magic: [bin[0], bin[1], bin[2], bin[3]],
-            ei_class: bin[4],
-            ei_data: bin[5],
-            ei_version: bin[6],
-            ei_osabi: bin[7],
+            ei_magic:      [bin[0], bin[1], bin[2], bin[3]],
+            ei_class:      bin[4],
+            ei_data:       bin[5],
+            ei_version:    bin[6],
+            ei_osabi:      bin[7],
             ei_abiversion: bin[8],
-            _ei_pad: [0; 7],
-            e_type: sli2u16(&bin[0x10..0x12]),
-            e_machine: sli2u16(&bin[0x12..0x14]),
-            e_version: sli2u32(&bin[0x14..0x18]),
-            e_entry: sli2u64(&bin[0x18..0x20]),
-            e_phoff: sli2u64(&bin[0x20..0x28]),
-            e_shoff: sli2u64(&bin[0x28..0x30]),
-            e_flags: sli2u32(&bin[0x30..0x34]),
+            _ei_pad:       [0; 7],
+            e_type:        sli2u16(&bin[0x10..0x12]),
+            e_machine:     sli2u16(&bin[0x12..0x14]),
+            e_version:     sli2u32(&bin[0x14..0x18]),
+            e_entry:       sli2u64(&bin[0x18..0x20]),
+            e_phoff:       sli2u64(&bin[0x20..0x28]),
+            e_shoff:       sli2u64(&bin[0x28..0x30]),
+            e_flags:       sli2u32(&bin[0x30..0x34]),
+            e_ehsize:      sli2u16(&bin[0x34..0x36]),
+            e_phentsize:   sli2u16(&bin[0x36..0x38]),
+            e_phnum:       sli2u16(&bin[0x38..0x3a]),
+            e_shentsize:   sli2u16(&bin[0x3a..0x3c]),
+            e_shnum:       sli2u16(&bin[0x3c..0x3e]),
+            e_shstrndx:    sli2u16(&bin[0x3e..0x40]),
         }
 
     }
@@ -44,39 +56,41 @@ impl ElfHeader {
 
     fn class2str(&self) -> &str {
         match self.ei_class {
-            1 => "32bit",
-            2 => "64bit",
+            1 => "ELF32",
+            2 => "ELF64",
             _ => "unknown",
         }
     }
 
     fn data2str(&self) -> &str {
         match self.ei_data {
-            1 => "LE",
-            2 => "BE",
+            1 => "little endian",
+            2 => "big endian",
             _ => "unknown",
         }
     }
 
     fn version2str(&self) -> &str {
         match self.ei_version {
-            1 => "original version",
+            1 => "1 (current)",
             _ => "unknown",
         }
     }
 
     fn osabi2str(&self) -> &str {
         match self.ei_osabi {
-            0x00 => "System V",
+            0x00 => "UNIX - System V",
             _ => "unknown",
         }
     }
 
     fn type2str(&self) -> &str {
         match self.e_type {
-            0x00 => "ET_NONE",
-            0x01 => "ET_REL",
-            0x02 => "ET_EXEC",
+            0x00 => "NONE (Unknown type)",
+            0x01 => "REL (Relocatable file)",
+            0x02 => "EXEC (Executable file)",
+            0x03 => "DYN (Shared object)",
+            0x04 => "CORE (Core file)",
             _ => "unknown",
         }
     }
@@ -102,14 +116,25 @@ impl fmt::Display for ElfHeader {
             return write!(f, "not ELF");
         }
 
-        write!(f, r"== ELF ==
-  ei_class: {}
-  ei_data: {}
-  ei_version: {}
-  ei_osabi: {}
-  ei_abiversion: {}
-  e_type: {}
-  e_machine: {}",
+        write!(f, r"ELF Header:
+  Class:                             {}
+  Data:                              {}
+  Version:                           {}
+  OS/ABI:                            {}
+  ABI Version:                       {}
+  Type:                              {}
+  Machine:                           {}
+  Version:                           {}
+  Entry point address:               0x{:x}
+  Start of program headers:          {} (bytes into file)
+  Start of section headers:          {} (bytes into file)
+  Flags:                             0x{:x}
+  Size of this header:               {} (bytes)
+  Size of program headers:           {} (bytes)
+  Number of program headers:         {}
+  Size of section headers:           {} (bytes)
+  Number of section headers:         {}
+  Section header string table index: {}",
                self.class2str(),
                self.data2str(),
                self.version2str(),
@@ -117,7 +142,17 @@ impl fmt::Display for ElfHeader {
                self.ei_abiversion,
                self.type2str(),
                self.machine2str(),
-        )
+               self.e_version,
+               self.e_entry,
+               self.e_phoff,
+               self.e_shoff,
+               self.e_flags,
+               self.e_ehsize,
+               self.e_phentsize,
+               self.e_phnum,
+               self.e_shentsize,
+               self.e_shnum,
+               self.e_shstrndx)
     }
 }
 
