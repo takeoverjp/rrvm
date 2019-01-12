@@ -828,7 +828,7 @@ fn parse_args() -> Args {
 }
 
 fn main() {
-    let args = parse_args();
+    let mut args = parse_args();
     debug!("{:?}", args);
 
     let env = env_logger::Env::default()
@@ -848,7 +848,8 @@ fn main() {
     let hdr = ElfHeader::new(&mem);
     if hdr.is_elf() {
         writeln!(std::io::stderr(), "Elf is not supported yet").unwrap();
-        writeln!(std::io::stderr(), "{:?}", hdr).unwrap();
+        args.offset = hdr.entry_point_address();
+        writeln!(std::io::stderr(), "offset = 0x{:x}", args.offset).unwrap();
         writeln!(std::io::stderr(), "{}", hdr).unwrap();
         std::process::exit(1);
     }
