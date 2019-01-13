@@ -48,15 +48,18 @@ impl fmt::Display for Elf {
             return write!(f, "not ELF");
         }
 
-        writeln!(f, r"{}", self.hdr);
-        writeln!(f, r"Section Headers:
+        let mut s = format!(r"{}", self.hdr);
+        s = format!(r"{}
+Section Headers:
   [Nr] Name              Type             Address           Offset
-       Size              EntSize          Flags  Link  Info  Align");
+       Size              EntSize          Flags  Link  Info  Align", s);
         for (idx, sec) in (&self.sec).into_iter().enumerate() {
-            write!(f, "  [{:2}] {}\n", idx, sec);
+            s = format!("{}
+  [{:2}] {}\n",
+                            s, idx, sec);
         }
 
-        Ok(())
+        write!(f, "{}", s)
     }
 }
 
