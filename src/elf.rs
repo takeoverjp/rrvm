@@ -13,7 +13,12 @@ impl Elf {
             sec: vec![],
         };
 
-        this.sec.push(SectionHeader::new(&bin[0x26e0..]));
+        let sec_start = this.hdr.e_shoff as usize;
+        for i in 0..this.hdr.e_shnum {
+            let offset = sec_start + (i * this.hdr.e_shentsize) as usize;
+            let end = offset + this.hdr.e_shentsize as usize;
+            this.sec.push(SectionHeader::new(&bin[offset..end]));
+        }
 
         this
     }
@@ -33,7 +38,15 @@ impl fmt::Display for Elf {
             return write!(f, "not ELF");
         }
 
-        write!(f, r"{}", self.hdr)
+        writeln!(f, r"{}", self.hdr);
+        writeln!(f, r"Section Headers:
+  [Nr] Name              Type             Address           Offset
+       Size              EntSize          Flags  Link  Info  Align");
+        for (idx, sec) in (&self.sec).into_iter().enumerate() {
+            write!(f, "  [{:2}] {}\n", idx, sec);
+        }
+
+        Ok(())
     }
 }
 
@@ -294,12 +307,9 @@ impl SectionHeader {
 
 impl fmt::Display for SectionHeader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, r"Section Headers:
-  [Nr] Name              Type             Address           Offset
-       Size              EntSize          Flags  Link  Info  Align
-  [{:2}] {:16} {:16} {:016x} {:08x}
-       {:016x} {:016x} {:6} {:4x} {:5} {:6}",
-               "??", "????",
+        write!(f, r"{:16}  {:16} {:016x}  {:08x}
+       {:016x}  {:016x} {:6} {:4x} {:5}     {:<4}",
+               "????",
                self.type2str(),
                self.sh_addr,
                self.sh_offset,
