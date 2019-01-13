@@ -20,6 +20,24 @@ impl Elf {
             this.sec.push(SectionHeader::new(&bin[offset..end]));
         }
 
+        let start;
+        {
+            let shstrtab = &this.sec[(this.hdr.e_shnum - 1) as usize];
+            start = shstrtab.sh_offset as usize;
+        }
+        {
+            for sec in &mut this.sec {
+                let my_start = start + sec.sh_name_offset as usize;
+                for c in &bin[my_start..] {
+                    if *c == 0 {
+                        break;
+                    }
+                    sec.sh_name_offset += 1;
+                    sec.sh_name.push(*c as char);
+                }
+            }
+        }
+
         this
     }
 
@@ -264,16 +282,17 @@ mod test_elf_header {
 
 #[derive(Debug)]
 struct SectionHeader {
-    sh_name:      [u8; 4],
-    sh_type:      u32,
-    sh_flags:     u64,
-    sh_addr:      u64,
-    sh_offset:    u64,
-    sh_size:      u64,
-    sh_link:      u32,
-    sh_info:      u32,
-    sh_addralign: u64,
-    sh_entsize:   u64,
+    sh_name_offset: u32,
+    sh_name:        String,
+    sh_type:        u32,
+    sh_flags:       u64,
+    sh_addr:        u64,
+    sh_offset:      u64,
+    sh_size:        u64,
+    sh_link:        u32,
+    sh_info:        u32,
+    sh_addralign:   u64,
+    sh_entsize:     u64,
 }
 
 impl SectionHeader {
@@ -294,16 +313,17 @@ impl SectionHeader {
 
     fn new(bin: &[u8]) -> SectionHeader {
         SectionHeader {
-            sh_name:      [bin[0], bin[1], bin[2], bin[3]],
-            sh_type:      sli2u32(&bin[0x04..0x08]),
-            sh_flags:     sli2u64(&bin[0x08..0x10]),
-            sh_addr:      sli2u64(&bin[0x10..0x18]),
-            sh_offset:    sli2u64(&bin[0x18..0x20]),
-            sh_size:      sli2u64(&bin[0x20..0x28]),
-            sh_link:      sli2u32(&bin[0x28..0x2c]),
-            sh_info:      sli2u32(&bin[0x2c..0x30]),
-            sh_addralign: sli2u64(&bin[0x30..0x38]),
-            sh_entsize:   sli2u64(&bin[0x38..0x40]),
+            sh_name_offset: sli2u32(&bin[0x00..0x04]),
+            sh_name:        "".to_string(),
+            sh_type:        sli2u32(&bin[0x04..0x08]),
+            sh_flags:       sli2u64(&bin[0x08..0x10]),
+            sh_addr:        sli2u64(&bin[0x10..0x18]),
+            sh_offset:      sli2u64(&bin[0x18..0x20]),
+            sh_size:        sli2u64(&bin[0x20..0x28]),
+            sh_link:        sli2u32(&bin[0x28..0x2c]),
+            sh_info:        sli2u32(&bin[0x2c..0x30]),
+            sh_addralign:   sli2u64(&bin[0x30..0x38]),
+            sh_entsize:     sli2u64(&bin[0x38..0x40]),
         }
     }
 
@@ -341,7 +361,7 @@ impl fmt::Display for SectionHeader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, r"{:16}  {:16} {:016x}  {:08x}
        {:016x}  {:016x} {:6} {:4x} {:5}     {:<4}",
-               "????",
+               self.sh_name,
                self.type2str(),
                self.sh_addr,
                self.sh_offset,
