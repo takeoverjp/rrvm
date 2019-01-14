@@ -849,11 +849,7 @@ fn main() {
     if elf.is_elf() {
         writeln!(std::io::stderr(), "Elf is not supported yet").unwrap();
         args.offset = elf.entry_point_address();
-        let file_offset = match elf.entry_point_offset() {
-            Some(n) => n,
-            None => 0
-        };
-        args.offset -= file_offset;
+        args.offset -= elf.entry_point_offset().unwrap();
         writeln!(std::io::stderr(), "offset = 0x{:x}", args.offset).unwrap();
         writeln!(std::io::stderr(), "{}", elf).unwrap();
         std::process::exit(1);
