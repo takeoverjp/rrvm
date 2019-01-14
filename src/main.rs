@@ -828,7 +828,7 @@ fn parse_args() -> Args {
 }
 
 fn main() {
-    let mut args = parse_args();
+    let args = parse_args();
     debug!("{:?}", args);
 
     let env = env_logger::Env::default()
@@ -838,7 +838,6 @@ fn main() {
         .init();
 
     let mut reg = RegisterFile::new();
-    reg.pc += args.offset;
     let map = get_memmap(&args.prog);
     let mut mem = map.to_vec();
     unsafe {
@@ -846,17 +845,17 @@ fn main() {
     }
 
     let elf = Elf::new(&mem);
-    if elf.is_elf() {
-        writeln!(std::io::stderr(), "Elf is not supported yet").unwrap();
-        args.offset = elf.entry_point_address();
-        args.offset -= elf.entry_point_offset().unwrap();
-        writeln!(std::io::stderr(), "offset = 0x{:x}", args.offset).unwrap();
-        writeln!(std::io::stderr(), "{}", elf).unwrap();
-        std::process::exit(1);
-    }
+    let (entry_point_address, entry_point_offset) = if elf.is_elf() {
+        (elf.entry_point_address(), elf.entry_point_offset().unwrap())
+    } else {
+        (args.offset, 0)
+    };
+    info!("entry_point_address = 0x{:x}", entry_point_address);
+    info!("entry_point_offset  = 0x{:x}", entry_point_offset);
+    reg.pc = entry_point_address;
 
     loop {
-        let inst : u32 = fetch(&map, (reg.pc - args.offset) as usize);
+        let inst : u32 = fetch(&map, (entry_point_offset + (reg.pc - entry_point_address)) as usize);
         info!("{:08x}: 0x{:08x}", reg.pc, inst);
         if args.log_spike {
             println!("core   0: 0x{:016x} (0x{:08x}", reg.pc, inst);
