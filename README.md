@@ -38,6 +38,13 @@ $ make install
 $ cargo run ${RISCV}/target/share/riscv-tests/isa/rv64ui-p-addi.bin
 ```
 
+## Run all regression tests
+
+```
+find ${RISCV}/target/share/riscv-tests/isa/ | grep -v dump | grep rv64  | xargs -I@@@ cargo run @@@
+```
+
+
 # Howto integration test
 
 ## Install dependencies
