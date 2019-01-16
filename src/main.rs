@@ -113,7 +113,7 @@ fn test_sign_ext() {
     assert_eq!(0x7f, sign_ext(0xf07f, 8));
 }
 
-fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32) {
+fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32, entry_point_offset: u64, entry_point_address: u64) {
     const FUNCT3_LB  : u32 = 0b000;
     const FUNCT3_LH  : u32 = 0b001;
     const FUNCT3_LW  : u32 = 0b010;
@@ -127,7 +127,7 @@ fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32) {
     let rs1    = get_rs1(inst) as usize;
     let imm  = get_imm12(inst);
     let offset = sign_ext(imm as u64, 12);
-    let addr   = (reg.x[rs1] as i64 + offset) as u64;
+    let addr   = entry_point_offset + (((reg.x[rs1] as i64 + offset) as u64) - entry_point_address);
 
     if mmio_region(addr) {
         warn!("{}: {}: Not implemented", file!(), line!());
@@ -338,19 +338,13 @@ fn handle_long_op_48(_reg: &RegisterFile, _inst: u32) {
     warn!("{}: {}: Not implemented", file!(), line!());
 }
 
+const RISCV_TESTS_TOHOST: u64 = 0x2000;
 fn mmio_region(addr: u64) -> bool {
-    const UART_BASE: u64 = 0x80000000;
-    addr >= UART_BASE
+    addr == RISCV_TESTS_TOHOST
 }
 
 fn mmio_store(addr: u64, val: u64) {
-    const UART_TXBUF: u64 = 0x80000000 + 0x08;
-    const RISCV_TESTS_TOHOST: u64 = 0x80000000 + 0x1000;
-
     match addr {
-        UART_TXBUF => {
-            println!("@@@ {:?}", (val as u8) as char);
-        },
         RISCV_TESTS_TOHOST => {
             if val == 1 {
                 writeln!(std::io::stderr(), "@@@ riscv-tests: success").unwrap();
@@ -364,7 +358,7 @@ fn mmio_store(addr: u64, val: u64) {
     }
 }
 
-fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32) {
+fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32, entry_point_offset: u64, entry_point_address: u64) {
     const FUNCT3_SB  : u32 = 0b000;
     const FUNCT3_SH  : u32 = 0b001;
     const FUNCT3_SW  : u32 = 0b010;
@@ -375,7 +369,7 @@ fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32) {
     let rs2    = get_rs2(inst) as usize;
     let imm   = ((get_funct7(inst) << 5) + get_rd(inst)) as u64;
     let offset = sign_ext(imm, 12);
-    let addr   = (reg.x[rs1] as i64 + offset) as u64;
+    let addr   = entry_point_offset + (((reg.x[rs1] as i64 + offset) as u64) - entry_point_address);
 
     debug!("store {} to 0x{:016x}", reg.x[rs2], addr);
     if mmio_region(addr) {
@@ -863,7 +857,7 @@ fn main() {
 
         let opcode = get_opcode(inst);
         match opcode {
-            LOAD          => handle_load(&mem, &mut reg, inst),
+            LOAD          => handle_load(&mem, &mut reg, inst, entry_point_offset, entry_point_address),
             LOAD_FP       => handle_load_fp(&mut reg, inst),
             CUSTOM_0      => handle_custom_0(&mut reg, inst),
             MISC_MEM      => handle_misc_mem(&mut reg, inst),
@@ -871,7 +865,7 @@ fn main() {
             AUIPC         => handle_auipc(&mut reg, inst),
             OP_IMM_32     => handle_op_imm_32(&mut reg, inst),
             LONG_OP_48    => handle_long_op_48(&mut reg, inst),
-            STORE         => handle_store(&mut mem, &mut reg, inst),
+            STORE         => handle_store(&mut mem, &mut reg, inst, entry_point_offset, entry_point_address),
             STORE_FP      => handle_store_fp(&mut reg, inst),
             CUSTOM_1      => handle_custom_1(&mut reg, inst),
             AMO           => handle_amo(&mut reg, inst),
