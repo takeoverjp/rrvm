@@ -241,7 +241,7 @@ fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
     match funct3 {
         FUNCT3_ADDI      => {
             info!("addi {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], simm);
-            reg.x[rd] = ((reg.x[rs1] as i64) + simm) as u64;
+            reg.x[rd] = (reg.x[rs1] as i64).wrapping_add(simm) as u64;
         },
         FUNCT3_SLLI      => {
             info!("slli {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], shamt);
