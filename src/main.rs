@@ -130,7 +130,7 @@ fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32, entry_point_off
     let addr   = entry_point_offset + (((reg.x[rs1] as i64 + offset) as u64) - entry_point_address);
 
     if mmio_region(addr) {
-        warn!("{}: {}: Not implemented", file!(), line!());
+        unimplemented!();
     } else {
         let addr = addr as usize;
         match funct3 {
@@ -193,11 +193,11 @@ fn handle_load(map: &Vec<u8>, reg: &mut RegisterFile, inst: u32, entry_point_off
 }
 
 fn handle_load_fp(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_custom_0(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_misc_mem(_reg: &RegisterFile, inst: u32) {
@@ -335,7 +335,7 @@ fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
 }
 
 fn handle_long_op_48(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 const RISCV_TESTS_TOHOST: u64 = 0x2000;
@@ -414,15 +414,15 @@ fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32, entry_point_of
 }
 
 fn handle_store_fp(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_custom_1(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_amo(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_op(reg: &mut RegisterFile, inst: u32) {
@@ -504,39 +504,39 @@ fn handle_lui(reg: &mut RegisterFile, inst: u32) {
 }
 
 fn handle_op_32(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_long_op_64(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_madd(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_msub(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_nmsub(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_nmadd(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_op_fp(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_custom2(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_long_op_48_2(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_branch(reg: &mut RegisterFile, inst: u32) {
@@ -728,11 +728,11 @@ fn handle_system(reg: &mut RegisterFile, inst: u32) {
 }
 
 fn handle_custom3(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 fn handle_long_op_ge_80(_reg: &RegisterFile, _inst: u32) {
-    warn!("{}: {}: Not implemented", file!(), line!());
+    unimplemented!();
 }
 
 
