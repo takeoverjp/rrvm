@@ -576,7 +576,7 @@ fn handle_branch(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_BGE  => {
             info!("bge {},{},{}",
                   ABI_NAME[rs1], ABI_NAME[rs2], offset);
-            jump = reg.x[rs1] >= reg.x[rs2]; // TODO : sign
+            jump = (reg.x[rs1] as i64) >= (reg.x[rs2] as i64);
         },
         FUNCT3_BLTU => {
             info!("bltu {},{},{}",
