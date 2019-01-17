@@ -447,7 +447,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_ADD_SUB => match funct7 {
             FUNCT7_ADD => {
                 info!("add {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = reg.x[rs1] + reg.x[rs2];
+                reg.x[rd] = reg.x[rs1].wrapping_add(reg.x[rs2]);
             },
             FUNCT7_SUB => {
                 info!("sub {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
