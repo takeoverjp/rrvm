@@ -458,7 +458,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         },
         FUNCT3_SLL     => {
             info!("sll {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-            reg.x[rd] = reg.x[rs1] << reg.x[rs2];
+            reg.x[rd] = reg.x[rs1] << (reg.x[rs2] & 0b11_1111);
         },
         FUNCT3_SLT     => {
             info!("slt {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
