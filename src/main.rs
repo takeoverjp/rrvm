@@ -945,7 +945,7 @@ mod tests {
         let inst: u32 = inst_i(4, 1, 0b000, 2, 0b0000011);
         let mem: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
         reg.x[1] = 0x2;
-        handle_load(&mem, &mut reg, inst);
+        handle_load(&mem, &mut reg, inst, 0, 0);
         assert_eq!(0x06, reg.x[2]);
     }
 
@@ -955,7 +955,7 @@ mod tests {
         let inst: u32 = inst_i(4, 1, 0b000, 2, 0b0000011);
         let mem: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 0xfe, 7];
         reg.x[1] = 0x2;
-        handle_load(&mem, &mut reg, inst);
+        handle_load(&mem, &mut reg, inst, 0, 0);
         assert_eq!(-2i64 as u64, reg.x[2]);
     }
 
@@ -965,7 +965,7 @@ mod tests {
         let inst: u32 = inst_i(-4i16 as u16, 1, 0b000, 2, 0b0000011);
         let mem: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
         reg.x[1] = 10;
-        handle_load(&mem, &mut reg, inst);
+        handle_load(&mem, &mut reg, inst, 0, 0);
         assert_eq!(6, reg.x[2]);
     }
 
@@ -975,7 +975,7 @@ mod tests {
         let inst: u32 = inst_i(4, 1, 0b001, 2, 0b0000011);
         let mem: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
         reg.x[1] = 0x2;
-        handle_load(&mem, &mut reg, inst);
+        handle_load(&mem, &mut reg, inst, 0, 0);
         assert_eq!(0x0706, reg.x[2]);
     }
 
@@ -985,7 +985,7 @@ mod tests {
         let inst: u32 = inst_i(4, 1, 0b001, 2, 0b0000011);
         let mem: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 0xfe, 0xff];
         reg.x[1] = 0x2;
-        handle_load(&mem, &mut reg, inst);
+        handle_load(&mem, &mut reg, inst, 0, 0);
         assert_eq!(-2i64 as u64, reg.x[2]);
     }
 
@@ -995,7 +995,7 @@ mod tests {
         let inst: u32 = inst_i(-4i16 as u16, 1, 0b001, 2, 0b0000011);
         let mem: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
         reg.x[1] = 10;
-        handle_load(&mem, &mut reg, inst);
+        handle_load(&mem, &mut reg, inst, 0, 0);
         assert_eq!(0x0706, reg.x[2]);
     }
 
