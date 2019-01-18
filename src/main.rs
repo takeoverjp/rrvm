@@ -436,6 +436,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_SRL_SRA : u32 = 0b101;
     const FUNCT3_OR      : u32 = 0b110;
     const FUNCT3_AND     : u32 = 0b111;
+    const SHIFT_MASK     : u64 = 0b111111;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
@@ -458,7 +459,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         },
         FUNCT3_SLL     => {
             info!("sll {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-            reg.x[rd] = reg.x[rs1] << (reg.x[rs2] & 0b11_1111);
+            reg.x[rd] = reg.x[rs1] << (reg.x[rs2] & SHIFT_MASK);
         },
         FUNCT3_SLT     => {
             info!("slt {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
@@ -475,7 +476,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_SRL_SRA => {
             if inst & (1 << 30) == 0 {
                 info!("srl {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = reg.x[rs1] - reg.x[rs2];
+                reg.x[rd] = reg.x[rs1] >> (reg.x[rs2] & SHIFT_MASK);
             } else {
                 info!("sra {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
                 reg.x[rd] = reg.x[rs1] - reg.x[rs2]; // TODO
