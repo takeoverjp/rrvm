@@ -471,7 +471,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         },
         FUNCT3_XOR     => {
             info!("xor {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-            reg.x[rd] = reg.x[rs1] - reg.x[rs2];
+            reg.x[rd] = reg.x[rs1] ^ reg.x[rs2];
         },
         FUNCT3_SRL_SRA => {
             if inst & (1 << 30) == 0 {
