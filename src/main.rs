@@ -8,10 +8,12 @@ extern crate hex;
 mod encodings;
 mod csr;
 mod elf;
+mod memory;
 
 use encodings::*;
 use csr::*;
 use elf::*;
+use memory::*;
 
 use std::{env, process};
 use std::io::Write;
@@ -58,13 +60,6 @@ impl RegisterFile {
     }
 }
 
-fn u8x4_to_u32(x0:u8, x1:u8, x2:u8, x3:u8) -> u32 {
-    return (x0 as u32)
-        | ((x1 as u32) << 8)
-        | ((x2 as u32) << 16)
-        | ((x3 as u32) << 24);
-}
-
 fn get_memmap(file_path: &str) -> memmap::Mmap {
     let file = match File::open(file_path) {
         Ok(file) => file,
@@ -85,10 +80,6 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
     };
 
     mmap
-}
-
-fn fetch(map: &memmap::Mmap, pc: usize) -> u32 {
-    u8x4_to_u32(map[pc+0], map[pc+1], map[pc+2], map[pc+3])
 }
 
 fn sign_ext(val: u64, size: u8) -> i64 {
@@ -849,8 +840,10 @@ fn main() {
     info!("entry_point_offset  = 0x{:x}", entry_point_offset);
     reg.pc = entry_point_address;
 
+    let mem2 = Memory::new(&map, &elf);
+
     loop {
-        let inst : u32 = fetch(&map, (entry_point_offset + (reg.pc - entry_point_address)) as usize);
+        let inst : u32 = mem2.lw(reg.pc);
         info!("{:08x}: 0x{:08x}", reg.pc, inst);
         if args.log_spike {
             println!("core   0: 0x{:016x} (0x{:08x}", reg.pc, inst);
