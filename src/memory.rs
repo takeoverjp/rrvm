@@ -45,23 +45,27 @@ impl<'a> Memory<'a> {
     }
 
     pub fn ld(&self, addr: u64) -> u64 {
-        let index = (addr - self.entry_point_address + self.entry_point_offset) as usize;
+        let index = self.addr2index(addr);
         u8x8_to_u64(self.map[index+0], self.map[index+1], self.map[index+2], self.map[index+3],
                     self.map[index+4], self.map[index+5], self.map[index+6], self.map[index+7])
     }
 
     pub fn lw(&self, addr: u64) -> u32 {
-        let index = (addr - self.entry_point_address + self.entry_point_offset) as usize;
+        let index = self.addr2index(addr);
         u8x4_to_u32(self.map[index+0], self.map[index+1], self.map[index+2], self.map[index+3])
     }
 
     pub fn lh(&self, addr: u64) -> u16 {
-        let index = (addr - self.entry_point_address + self.entry_point_offset) as usize;
+        let index = self.addr2index(addr);
         u8x2_to_u16(self.map[index+0], self.map[index+1])
     }
 
     pub fn lb(&self, addr: u64) -> u8 {
-        let index = (addr - self.entry_point_address + self.entry_point_offset) as usize;
+        let index = self.addr2index(addr);
         self.map[index]
+    }
+
+    fn addr2index(&self, addr: u64) -> usize{
+        (addr - self.entry_point_address + self.entry_point_offset) as usize
     }
 }
