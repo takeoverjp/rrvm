@@ -312,7 +312,7 @@ fn handle_long_op_48(_reg: &RegisterFile, _inst: u32) {
     unimplemented!();
 }
 
-const RISCV_TESTS_TOHOST: u64 = 0x2000;
+const RISCV_TESTS_TOHOST: u64 = 0x80001000;
 fn mmio_region(addr: u64) -> bool {
     addr == RISCV_TESTS_TOHOST
 }
@@ -332,7 +332,7 @@ fn mmio_store(addr: u64, val: u64) {
     }
 }
 
-fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32, entry_point_offset: u64, entry_point_address: u64) {
+fn handle_store(mem: &mut Memory, reg: &RegisterFile, inst: u32) {
     const FUNCT3_SB  : u32 = 0b000;
     const FUNCT3_SH  : u32 = 0b001;
     const FUNCT3_SW  : u32 = 0b010;
@@ -343,7 +343,7 @@ fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32, entry_point_of
     let rs2    = get_rs2(inst) as usize;
     let imm   = ((get_funct7(inst) << 5) + get_rd(inst)) as u64;
     let offset = sign_ext(imm, 12);
-    let addr   = entry_point_offset + (((reg.x[rs1] as i64 + offset) as u64) - entry_point_address);
+    let addr   = (reg.x[rs1] as i64 + offset) as u64;
 
     debug!("store {} to 0x{:016x}", reg.x[rs2], addr);
     if mmio_region(addr) {
@@ -353,33 +353,22 @@ fn handle_store(map: &mut Vec<u8>, reg: &RegisterFile, inst: u32, entry_point_of
             FUNCT3_SB => {
                 info!("sb {},{}({})",
                       ABI_NAME[rs2], offset, ABI_NAME[rs1]);
-                map[addr as usize] = reg.x[rs2] as u8;
+                mem.sb(addr, reg.x[rs2] as u8);
             },
             FUNCT3_SH => {
                 info!("sh {},{}({})",
                       ABI_NAME[rs2], offset, ABI_NAME[rs1]);
-                map[addr as usize] = (reg.x[rs2] & 0xff) as u8;
-                map[(addr+1) as usize] = (reg.x[rs2] >> 8 & 0xff) as u8;
+                mem.sh(addr, reg.x[rs2] as u16);
             },
             FUNCT3_SW => {
                 info!("sw {},{}({})",
                       ABI_NAME[rs2], offset, ABI_NAME[rs1]);
-                map[addr as usize] = (reg.x[rs2] & 0xff) as u8;
-                map[(addr+1) as usize] = (reg.x[rs2] >> 8 & 0xff) as u8;
-                map[(addr+2) as usize] = (reg.x[rs2] >> 16 & 0xff) as u8;
-                map[(addr+3) as usize] = (reg.x[rs2] >> 24 & 0xff) as u8;
+                mem.sw(addr, reg.x[rs2] as u32);
             },
             FUNCT3_SD => {
                 info!("sd {},{}({})",
                       ABI_NAME[rs2], offset, ABI_NAME[rs1]);
-                map[addr as usize] = (reg.x[rs2] & 0xff) as u8;
-                map[(addr+1) as usize] = (reg.x[rs2] >> 8 & 0xff) as u8;
-                map[(addr+2) as usize] = (reg.x[rs2] >> 16 & 0xff) as u8;
-                map[(addr+3) as usize] = (reg.x[rs2] >> 24 & 0xff) as u8;
-                map[(addr+4) as usize] = (reg.x[rs2] >> 32 & 0xff) as u8;
-                map[(addr+5) as usize] = (reg.x[rs2] >> 40 & 0xff) as u8;
-                map[(addr+6) as usize] = (reg.x[rs2] >> 48 & 0xff) as u8;
-                map[(addr+7) as usize] = (reg.x[rs2] >> 56 & 0xff) as u8;
+                mem.sd(addr, reg.x[rs2] as u64);
             },
             _ => warn!("{}: {}: unknown funct3 0x{:x}",
                           file!(), line!(), funct3)
@@ -814,19 +803,17 @@ fn main() {
     }
 
     let elf = Elf::new(&mem);
-    let (entry_point_address, entry_point_offset) = if elf.is_elf() {
-        (elf.entry_point_address(), elf.entry_point_offset().unwrap())
+    reg.pc = if elf.is_elf() {
+        elf.entry_point_address()
     } else {
-        (args.offset, 0)
+        args.offset
     };
-    info!("entry_point_address = 0x{:x}", entry_point_address);
-    info!("entry_point_offset  = 0x{:x}", entry_point_offset);
-    reg.pc = entry_point_address;
+    info!("entry_point_address = 0x{:x}", reg.pc);
 
-    let mem2 = Memory::new(&map, &elf);
+    let mut mem = Memory::new(&map, &elf);
 
     loop {
-        let inst : u32 = mem2.lw(reg.pc);
+        let inst : u32 = mem.lw(reg.pc);
         info!("{:08x}: 0x{:08x}", reg.pc, inst);
         if args.log_spike {
             println!("core   0: 0x{:016x} (0x{:08x}", reg.pc, inst);
@@ -834,7 +821,7 @@ fn main() {
 
         let opcode = get_opcode(inst);
         match opcode {
-            LOAD          => handle_load(&mem2, &mut reg, inst),
+            LOAD          => handle_load(&mem, &mut reg, inst),
             LOAD_FP       => handle_load_fp(&mut reg, inst),
             CUSTOM_0      => handle_custom_0(&mut reg, inst),
             MISC_MEM      => handle_misc_mem(&mut reg, inst),
@@ -842,7 +829,7 @@ fn main() {
             AUIPC         => handle_auipc(&mut reg, inst),
             OP_IMM_32     => handle_op_imm_32(&mut reg, inst),
             LONG_OP_48    => handle_long_op_48(&mut reg, inst),
-            STORE         => handle_store(&mut mem, &mut reg, inst, entry_point_offset, entry_point_address),
+            STORE         => handle_store(&mut mem, &mut reg, inst),
             STORE_FP      => handle_store_fp(&mut reg, inst),
             CUSTOM_1      => handle_custom_1(&mut reg, inst),
             AMO           => handle_amo(&mut reg, inst),
