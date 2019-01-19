@@ -61,6 +61,7 @@ impl<'a> Memory<'a> {
     }
 
     pub fn lb(&self, addr: u64) -> u8 {
-        self.map[addr as usize]
+        let index = (addr - self.entry_point_address + self.entry_point_offset) as usize;
+        self.map[index]
     }
 }
