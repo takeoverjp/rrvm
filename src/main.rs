@@ -481,64 +481,49 @@ fn handle_op_32(reg: &mut RegisterFile, inst: u32) {
     const FUNCT7_ADDW      : u32 = 0b0000000;
     const FUNCT7_SUBW      : u32 = 0b0100000;
     const FUNCT3_SLLW      : u32 = 0b001;
-    const _FUNCT3_SRLW_SRAW : u32 = 0b101;
-    const _FUNCT7_SRLW      : u32 = 0b0000000;
-    const _FUNCT7_SRAW      : u32 = 0b0100000;
-    const SHIFT_MASK       : u64 = 0b11111;
+    const FUNCT3_SRLW_SRAW : u32 = 0b101;
+    const FUNCT7_SRLW      : u32 = 0b0000000;
+    const FUNCT7_SRAW      : u32 = 0b0100000;
+    const SHIFT_MASK       : u32 = 0b11111;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
+    let rs1w   = reg.x[rs1] as u32;
     let rs2    = get_rs2(inst) as usize;
+    let rs2w   = reg.x[rs2] as u32;
     let funct7 = get_funct7(inst);
 
     match funct3 {
         FUNCT3_ADDW_SUBW => match funct7 {
             FUNCT7_ADDW => {
                 info!("addw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = sign_ext(reg.x[rs1].wrapping_add(reg.x[rs2]), 32) as u64;
+                reg.x[rd] = sign_ext(rs1w.wrapping_add(rs2w) as u64, 32) as u64;
             },
             FUNCT7_SUBW => {
                 info!("subw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = sign_ext(reg.x[rs1].wrapping_sub(reg.x[rs2]), 32) as u64;
+                reg.x[rd] = sign_ext(rs1w.wrapping_sub(rs2w) as u64, 32) as u64;
             },
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         },
         FUNCT3_SLLW     => {
             info!("sllw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-            reg.x[rd] = sign_ext(reg.x[rs1] << (reg.x[rs2] & SHIFT_MASK), 32) as u64;
+            reg.x[rd] = sign_ext((rs1w << (rs2w & SHIFT_MASK)) as u64, 32) as u64;
         },
-        // FUNCT3_SLT     => {
-        //     info!("slt {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-        //     reg.x[rd] = ((reg.x[rs1] as i64) < (reg.x[rs2] as i64)) as u64;
-        // },
-        // FUNCT3_SLTU    => {
-        //     info!("slu {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-        //     reg.x[rd] = (reg.x[rs1] < reg.x[rs2]) as u64;
-        // },
-        // FUNCT3_XOR     => {
-        //     info!("xor {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-        //     reg.x[rd] = reg.x[rs1] ^ reg.x[rs2];
-        // },
-        // FUNCT3_SRL_SRA => {
-        //     if inst & (1 << 30) == 0 {
-        //         info!("srl {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-        //         reg.x[rd] = reg.x[rs1] >> (reg.x[rs2] & SHIFT_MASK);
-        //     } else {
-        //         info!("sra {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-        //         reg.x[rd] = reg.x[rs1] - reg.x[rs2]; // TODO
-        //         unimplemented!();
-        //     }
-        // },
-        // FUNCT3_OR      => {
-        //     info!("or {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-        //     reg.x[rd] = reg.x[rs1] | reg.x[rs2];
-        // },
-        // FUNCT3_AND     => {
-        //     info!("and {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-        //     reg.x[rd] = reg.x[rs1] & reg.x[rs2];
-        // },
+        FUNCT3_SRLW_SRAW => match funct7 {
+            FUNCT7_SRLW => {
+                info!("srlw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+                reg.x[rd] = sign_ext((rs1w >> (rs2w & SHIFT_MASK)) as u64, 32) as u64;
+            },
+            FUNCT7_SRAW => {
+                info!("sraw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+                reg.x[rd] = reg.x[rs1] - reg.x[rs2]; // TODO
+                unimplemented!();
+            },
+            _ => warn!("{}: {}: unknown funct7 0x{:x}",
+                          file!(), line!(), funct7)
+        },
         _ => warn!("{}: {}: unknown funct3 0x{:x}",
                       file!(), line!(), funct3)
     }
