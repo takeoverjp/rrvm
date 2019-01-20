@@ -83,6 +83,10 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
 }
 
 fn sign_ext(val: u64, size: u8) -> i64 {
+    if size == XLEN as u8 {
+        return val as i64;
+    }
+
     let mut ret = val as i64;
 
     if (val & (1 << (size - 1))) != 0 {
