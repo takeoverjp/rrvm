@@ -1,19 +1,17 @@
-extern crate memmap;
-
 use elf::Elf;
 
 #[derive(Debug)]
 pub struct Memory<'a> {
-    map: Vec<u8>,
+    map: &'a mut Vec<u8>,
     elf: &'a Elf,
     entry_point_address: u64,
     entry_point_offset: u64,
 }
 
 impl<'a> Memory<'a> {
-    pub fn new(map: &memmap::Mmap, elf: &'a Elf) -> Memory<'a> {
+    pub fn new(vec: &'a mut Vec<u8>, elf: &'a Elf) -> Memory<'a> {
         Memory {
-            map: map.to_vec(),
+            map: vec,
             elf: elf,
             entry_point_address: elf.entry_point_address(),
             entry_point_offset: elf.entry_point_offset().unwrap(),

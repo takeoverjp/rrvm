@@ -797,12 +797,9 @@ fn main() {
 
     let mut reg = RegisterFile::new();
     let map = get_memmap(&args.prog);
-    let mut mem = map.to_vec();
-    unsafe {
-        mem.set_len(args.memory);
-    }
+    let mut vec = map.to_vec();
 
-    let elf = Elf::new(&mem);
+    let elf = Elf::new(&vec);
     reg.pc = if elf.is_elf() {
         elf.entry_point_address()
     } else {
@@ -810,7 +807,7 @@ fn main() {
     };
     info!("entry_point_address = 0x{:x}", reg.pc);
 
-    let mut mem = Memory::new(&map, &elf);
+    let mut mem = Memory::new(&mut vec, &elf);
 
     loop {
         let inst : u32 = mem.lw(reg.pc);
