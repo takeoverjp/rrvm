@@ -401,6 +401,8 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_SLTU    : u32 = 0b011;
     const FUNCT3_XOR     : u32 = 0b100;
     const FUNCT3_SRL_SRA : u32 = 0b101;
+    const FUNCT7_SRL     : u32 = 0b0000000;
+    const FUNCT7_SRA     : u32 = 0b0100000;
     const FUNCT3_OR      : u32 = 0b110;
     const FUNCT3_AND     : u32 = 0b111;
     const SHIFT_MASK     : u64 = 0b111111;
@@ -440,15 +442,18 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
             info!("xor {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
             reg.x[rd] = reg.x[rs1] ^ reg.x[rs2];
         },
-        FUNCT3_SRL_SRA => {
-            if inst & (1 << 30) == 0 {
+        FUNCT3_SRL_SRA => match funct7 {
+            FUNCT7_SRL => {
                 info!("srl {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
                 reg.x[rd] = reg.x[rs1] >> (reg.x[rs2] & SHIFT_MASK);
-            } else {
+            },
+            FUNCT7_SRA => {
                 info!("sra {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
                 reg.x[rd] = reg.x[rs1] - reg.x[rs2]; // TODO
                 unimplemented!();
-            }
+            },
+            _ => warn!("{}: {}: unknown funct7 0x{:x}",
+                          file!(), line!(), funct7)
         },
         FUNCT3_OR      => {
             info!("or {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
