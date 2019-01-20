@@ -278,6 +278,7 @@ fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
+    let rs1w   = reg.x[rs1] as u32;
     let imm  = get_imm12(inst) as u64;
     let simm = sign_ext(imm, 12);
     let shamt  = get_shamt(inst) as u8;
@@ -296,8 +297,7 @@ fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
             if inst & (1 << 30) == 0 {
                 info!("srliw {},{},{}",
                       ABI_NAME[rd], ABI_NAME[rs1], shamt);
-                // reg.x[rd] = reg.x[rs1] >> shamt;
-                unimplemented!();
+                reg.x[rd] = sign_ext((rs1w >> shamt) as u64, 32) as u64;
             } else {
                 info!("sraiw {},{},{}",
                       ABI_NAME[rd], ABI_NAME[rs1], shamt);
