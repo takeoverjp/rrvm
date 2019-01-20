@@ -475,11 +475,11 @@ fn handle_op_32(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_ADDW_SUBW : u32 = 0b000;
     const FUNCT7_ADDW      : u32 = 0b0000000;
     const FUNCT7_SUBW      : u32 = 0b0100000;
-    const _FUNCT3_SLLW      : u32 = 0b001;
+    const FUNCT3_SLLW      : u32 = 0b001;
     const _FUNCT3_SRLW_SRAW : u32 = 0b101;
     const _FUNCT7_SRLW      : u32 = 0b0000000;
     const _FUNCT7_SRAW      : u32 = 0b0100000;
-    const _SHIFT_MASK     : u64 = 0b111111;
+    const SHIFT_MASK       : u64 = 0b11111;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
@@ -500,10 +500,10 @@ fn handle_op_32(reg: &mut RegisterFile, inst: u32) {
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         },
-        // FUNCT3_SLL     => {
-        //     info!("sll {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-        //     reg.x[rd] = reg.x[rs1] << (reg.x[rs2] & SHIFT_MASK);
-        // },
+        FUNCT3_SLLW     => {
+            info!("sllw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            reg.x[rd] = sign_ext(reg.x[rs1] << (reg.x[rs2] & SHIFT_MASK), 32) as u64;
+        },
         // FUNCT3_SLT     => {
         //     info!("slt {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
         //     reg.x[rd] = ((reg.x[rs1] as i64) < (reg.x[rs2] as i64)) as u64;
