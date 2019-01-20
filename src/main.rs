@@ -290,8 +290,7 @@ fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
         },
         FUNCT3_SLLIW       => {
             info!("slliw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], shamt);
-            // reg.x[rd] = reg.x[rs1] << shamt;
-            unimplemented!();
+            reg.x[rd] = sign_ext((reg.x[rs1] << shamt) as u64, 32) as u64;
         },
         FUNCT3_SRLIW_SRAIW => {
             if inst & (1 << 30) == 0 {
