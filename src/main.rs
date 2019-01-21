@@ -89,10 +89,18 @@ fn sign_ext(val: u64, size: u8) -> i64 {
 
     let mut ret = val as i64;
 
-    if (val & (1 << (size - 1))) != 0 {
-        ret |= ((1 << (64 - size)) - 1) << size;
+    let sign_mask = if size == 1 {
+        1
     } else {
-        ret &= !(((1 << (64 - size)) - 1) << size);
+        1 << (size - 1)
+    };
+
+    let mask: i64 = 1 << (64 - size);
+    let mask = mask.wrapping_sub(1) << size;
+    if (val & sign_mask) != 0 {
+        ret |= mask;
+    } else {
+        ret &= !mask;
     }
 
     ret
@@ -281,7 +289,7 @@ fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
     let rs1w   = reg.x[rs1] as u32;
     let imm  = get_imm12(inst) as u64;
     let simm = sign_ext(imm, 12);
-    let shamt  = get_shamt(inst) as u8;
+    let shamt  = (get_shamt(inst) & 0b11111) as u8;
 
     match funct3 {
         FUNCT3_ADDIW       => {
@@ -301,9 +309,7 @@ fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
             } else {
                 info!("sraiw {},{},{}",
                       ABI_NAME[rd], ABI_NAME[rs1], shamt);
-                // reg.x[rd] = reg.x[rs1] >> shamt;
-                // reg.x[rd] = sign_ext(reg.x[rd], 64-shamt) as u64;
-                unimplemented!();
+                reg.x[rd] = sign_ext((rs1w >> shamt) as u64, 32-shamt) as u64;
             }
         },
         _ => warn!("{}: {}: unknown funct3 0x{:x}",
@@ -448,8 +454,8 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
             },
             FUNCT7_SRA => {
                 info!("sra {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = reg.x[rs1] - reg.x[rs2]; // TODO
-                unimplemented!();
+                reg.x[rd] = reg.x[rs1] >> (reg.x[rs2] & SHIFT_MASK);
+                reg.x[rd] = sign_ext(reg.x[rd], 32) as u64;
             },
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
