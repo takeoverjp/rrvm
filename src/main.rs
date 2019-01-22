@@ -453,6 +453,11 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
                 reg.x[rd] = reg.x[rs1] >> (reg.x[rs2] & SHIFT_MASK);
             },
             FUNCT7_SRA => {
+                /*
+                 * According to the spec 2.2 p. 31,
+                 * In RV64I, only the low 6 bits of rs2 are considered for the shift amount.
+                 * riscv-tests/isa/rv64ui-p-sra must be fixed.
+                 */
                 info!("sra {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
                 reg.x[rd] = reg.x[rs1] >> (reg.x[rs2] & SHIFT_MASK);
                 reg.x[rd] = sign_ext(reg.x[rd], 32) as u64;
