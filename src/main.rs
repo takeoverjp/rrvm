@@ -397,6 +397,19 @@ fn handle_amo(_reg: &RegisterFile, _inst: u32) {
     unimplemented!();
 }
 
+fn handle_muldiv(reg: &mut RegisterFile, funct3: u32, rd: usize, rs1: usize, rs2: usize) {
+    const FUNCT3_MUL : u32 = 0b000;
+
+    match funct3 {
+        FUNCT3_MUL => {
+            info!("mul {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            reg.x[rd] = reg.x[rs1].wrapping_mul(reg.x[rs2]);
+        },
+        _ => warn!("{}: {}: unknown funct3 0x{:x}",
+                   file!(), line!(), funct3)
+    }
+}
+
 fn handle_op(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_ADD_SUB : u32 = 0b000;
     const FUNCT7_ADD     : u32 = 0b0000000;
@@ -411,12 +424,17 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
     const FUNCT3_OR      : u32 = 0b110;
     const FUNCT3_AND     : u32 = 0b111;
     const SHIFT_MASK     : u64 = 0b111111;
+    const FUNCT7_MULDIV  : u32 = 0b0000001;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
     let rs2    = get_rs2(inst) as usize;
     let funct7 = get_funct7(inst);
+
+    if funct7 == FUNCT7_MULDIV {
+        return handle_muldiv(reg, funct3, rd, rs1, rs2);
+    }
 
     match funct3 {
         FUNCT3_ADD_SUB => match funct7 {
