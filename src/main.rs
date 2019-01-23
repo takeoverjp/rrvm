@@ -502,6 +502,7 @@ fn handle_op_32(reg: &mut RegisterFile, inst: u32) {
     let rs1w   = reg.x[rs1] as u32;
     let rs2    = get_rs2(inst) as usize;
     let rs2w   = reg.x[rs2] as u32;
+    let shamt = (rs2w & SHIFT_MASK) as u8;
     let funct7 = get_funct7(inst);
 
     match funct3 {
@@ -519,17 +520,16 @@ fn handle_op_32(reg: &mut RegisterFile, inst: u32) {
         },
         FUNCT3_SLLW     => {
             info!("sllw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-            reg.x[rd] = sign_ext((rs1w << (rs2w & SHIFT_MASK)) as u64, 32) as u64;
+            reg.x[rd] = sign_ext((rs1w << shamt) as u64, 32) as u64;
         },
         FUNCT3_SRLW_SRAW => match funct7 {
             FUNCT7_SRLW => {
                 info!("srlw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = sign_ext((rs1w >> (rs2w & SHIFT_MASK)) as u64, 32) as u64;
+                reg.x[rd] = sign_ext((rs1w >> shamt) as u64, 32) as u64;
             },
             FUNCT7_SRAW => {
                 info!("sraw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = reg.x[rs1] - reg.x[rs2]; // TODO
-                unimplemented!();
+                reg.x[rd] = sign_ext((rs1w >> shamt) as u64, 32 - shamt) as u64;
             },
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
