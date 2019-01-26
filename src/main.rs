@@ -398,12 +398,18 @@ fn handle_amo(_reg: &RegisterFile, _inst: u32) {
 }
 
 fn handle_muldiv(reg: &mut RegisterFile, funct3: u32, rd: usize, rs1: usize, rs2: usize) {
-    const FUNCT3_MUL : u32 = 0b000;
+    const FUNCT3_MUL  : u32 = 0b000;
+    const FUNCT3_MULH : u32 = 0b001;
 
     match funct3 {
         FUNCT3_MUL => {
             info!("mul {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
             reg.x[rd] = reg.x[rs1].wrapping_mul(reg.x[rs2]);
+        },
+        FUNCT3_MULH => {
+            info!("mulh {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            let tmp = ((reg.x[rs1] as i64) as i128).wrapping_mul((reg.x[rs2] as i64) as i128);
+            reg.x[rd] = (tmp >> XLEN) as u64;
         },
         _ => warn!("{}: {}: unknown funct3 0x{:x}",
                    file!(), line!(), funct3)
