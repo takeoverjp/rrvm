@@ -437,6 +437,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
     let rs1    = get_rs1(inst) as usize;
     let rs2    = get_rs2(inst) as usize;
     let funct7 = get_funct7(inst);
+    let shamt = (reg.x[rs2] & SHIFT_MASK) as u8;
 
     if funct7 == FUNCT7_MULDIV {
         return handle_muldiv(reg, funct3, rd, rs1, rs2);
@@ -457,7 +458,7 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         },
         FUNCT3_SLL     => {
             info!("sll {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-            reg.x[rd] = reg.x[rs1] << (reg.x[rs2] & SHIFT_MASK);
+            reg.x[rd] = reg.x[rs1] << shamt;
         },
         FUNCT3_SLT     => {
             info!("slt {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
@@ -474,17 +475,12 @@ fn handle_op(reg: &mut RegisterFile, inst: u32) {
         FUNCT3_SRL_SRA => match funct7 {
             FUNCT7_SRL => {
                 info!("srl {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = reg.x[rs1] >> (reg.x[rs2] & SHIFT_MASK);
+                reg.x[rd] = reg.x[rs1] >> shamt;
             },
             FUNCT7_SRA => {
-                /*
-                 * According to the spec 2.2 p. 31,
-                 * In RV64I, only the low 6 bits of rs2 are considered for the shift amount.
-                 * riscv-tests/isa/rv64ui-p-sra must be fixed.
-                 */
                 info!("sra {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
-                reg.x[rd] = reg.x[rs1] >> (reg.x[rs2] & SHIFT_MASK);
-                reg.x[rd] = sign_ext(reg.x[rd], 32) as u64;
+                reg.x[rd] = reg.x[rs1] >> shamt;
+                reg.x[rd] = sign_ext(reg.x[rd], 64-shamt) as u64;
             },
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
