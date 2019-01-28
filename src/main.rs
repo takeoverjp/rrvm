@@ -117,14 +117,6 @@ fn test_sign_ext() {
 }
 
 fn handle_load(mem: &Memory, reg: &mut RegisterFile, inst: u32) {
-    const FUNCT3_LB  : u32 = 0b000;
-    const FUNCT3_LH  : u32 = 0b001;
-    const FUNCT3_LW  : u32 = 0b010;
-    const FUNCT3_LD  : u32 = 0b011;
-    const FUNCT3_LBU : u32 = 0b100;
-    const FUNCT3_LHU : u32 = 0b101;
-    const FUNCT3_LWU : u32 = 0b110;
-
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
@@ -187,9 +179,6 @@ fn handle_custom_0(_reg: &RegisterFile, _inst: u32) {
 }
 
 fn handle_misc_mem(_reg: &RegisterFile, inst: u32) {
-    const FUNCT3_FENCE   : u32 = 0b000;
-    const FUNCT3_FENCE_I : u32 = 0b001;
-
     let funct3 = get_funct3(inst);
 
     match funct3 {
@@ -208,15 +197,6 @@ fn handle_misc_mem(_reg: &RegisterFile, inst: u32) {
 }
 
 fn handle_op_imm(reg: &mut RegisterFile, inst: u32) {
-    const FUNCT3_ADDI      : u32 = 0b000;
-    const FUNCT3_SLLI      : u32 = 0b001;
-    const FUNCT3_SLTI      : u32 = 0b010;
-    const FUNCT3_SLTIU     : u32 = 0b011;
-    const FUNCT3_XORI      : u32 = 0b100;
-    const FUNCT3_SRLI_SRAI : u32 = 0b101;
-    const FUNCT3_ORI       : u32 = 0b110;
-    const FUNCT3_ANDI      : u32 = 0b111;
-
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
@@ -279,10 +259,6 @@ fn handle_auipc(reg: &mut RegisterFile, inst: u32) {
 }
 
 fn handle_op_imm_32(reg: &mut RegisterFile, inst: u32) {
-    const FUNCT3_ADDIW       : u32 = 0b000;
-    const FUNCT3_SLLIW       : u32 = 0b001;
-    const FUNCT3_SRLIW_SRAIW : u32 = 0b101;
-
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
     let rs1    = get_rs1(inst) as usize;
@@ -342,11 +318,6 @@ fn mmio_store(addr: u64, val: u64) {
 }
 
 fn handle_store(mem: &mut Memory, reg: &RegisterFile, inst: u32) {
-    const FUNCT3_SB  : u32 = 0b000;
-    const FUNCT3_SH  : u32 = 0b001;
-    const FUNCT3_SW  : u32 = 0b010;
-    const FUNCT3_SD  : u32 = 0b011;
-
     let funct3 = get_funct3(inst);
     let rs1    = get_rs1(inst) as usize;
     let rs2    = get_rs2(inst) as usize;
@@ -398,11 +369,6 @@ fn handle_amo(_reg: &RegisterFile, _inst: u32) {
 }
 
 fn handle_muldiv(reg: &mut RegisterFile, funct3: u32, rd: usize, rs1: usize, rs2: usize) {
-    const FUNCT3_MUL    : u32 = 0b000;
-    const FUNCT3_MULH   : u32 = 0b001;
-    const FUNCT3_MULHSU : u32 = 0b010;
-    const FUNCT3_MULHU  : u32 = 0b011;
-
     match funct3 {
         FUNCT3_MUL => {
             info!("mul {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
@@ -429,20 +395,10 @@ fn handle_muldiv(reg: &mut RegisterFile, funct3: u32, rd: usize, rs1: usize, rs2
 }
 
 fn handle_op(reg: &mut RegisterFile, inst: u32) {
-    const FUNCT3_ADD_SUB : u32 = 0b000;
-    const FUNCT7_ADD     : u32 = 0b0000000;
-    const FUNCT7_SUB     : u32 = 0b0100000;
-    const FUNCT3_SLL     : u32 = 0b001;
-    const FUNCT3_SLT     : u32 = 0b010;
-    const FUNCT3_SLTU    : u32 = 0b011;
-    const FUNCT3_XOR     : u32 = 0b100;
-    const FUNCT3_SRL_SRA : u32 = 0b101;
-    const FUNCT7_SRL     : u32 = 0b0000000;
-    const FUNCT7_SRA     : u32 = 0b0100000;
-    const FUNCT3_OR      : u32 = 0b110;
-    const FUNCT3_AND     : u32 = 0b111;
     const SHIFT_MASK     : u64 = 0b111111;
     const FUNCT7_MULDIV  : u32 = 0b0000001;
+    const FUNCT7_SRL     : u32 = 0b0000000;
+    const FUNCT7_SRA     : u32 = 0b0100000;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
@@ -519,11 +475,9 @@ fn handle_lui(reg: &mut RegisterFile, inst: u32) {
 }
 
 fn handle_op_32(reg: &mut RegisterFile, inst: u32) {
-    const FUNCT3_ADDW_SUBW : u32 = 0b000;
     const FUNCT7_ADDW      : u32 = 0b0000000;
     const FUNCT7_SUBW      : u32 = 0b0100000;
     const FUNCT3_SLLW      : u32 = 0b001;
-    const FUNCT3_SRLW_SRAW : u32 = 0b101;
     const FUNCT7_SRLW      : u32 = 0b0000000;
     const FUNCT7_SRAW      : u32 = 0b0100000;
     const SHIFT_MASK       : u32 = 0b11111;
@@ -604,13 +558,6 @@ fn handle_long_op_48_2(_reg: &RegisterFile, _inst: u32) {
 }
 
 fn handle_branch(reg: &mut RegisterFile, inst: u32) {
-    const FUNCT3_BEQ:  u32 = 0b000;
-    const FUNCT3_BNE:  u32 = 0b001;
-    const FUNCT3_BLT:  u32 = 0b100;
-    const FUNCT3_BGE:  u32 = 0b101;
-    const FUNCT3_BLTU: u32 = 0b110;
-    const FUNCT3_BGEU: u32 = 0b111;
-
     let funct3 = get_funct3(inst);
     let rs1    = get_rs1(inst) as usize;
     let rs2    = get_rs2(inst) as usize;
@@ -698,13 +645,6 @@ fn handle_jal(reg: &mut RegisterFile, inst: u32) {
 }
 
 fn handle_system(reg: &mut RegisterFile, inst: u32) {
-    const FUNCT3_ECALL_EBREAK : u32 = 0b000;
-    const FUNCT3_CSRRW        : u32 = 0b001;
-    const FUNCT3_CSRRS        : u32 = 0b010;
-    const FUNCT3_CSRRC        : u32 = 0b011;
-    const FUNCT3_CSRRWI       : u32 = 0b101;
-    const FUNCT3_CSRRSI       : u32 = 0b110;
-    const FUNCT3_CSRRCI       : u32 = 0b111;
     const MCAUSE_BREAK        : u64 = (0 << (XLEN -1)) |  3u64;
     const MCAUSE_USER_ECALL         : u64 = (0 << (XLEN -1)) |  8u64;
     const MCAUSE_SUPERVISOR_ECALL   : u64 = (0 << (XLEN -1)) |  9u64;
