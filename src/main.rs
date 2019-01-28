@@ -398,8 +398,9 @@ fn handle_amo(_reg: &RegisterFile, _inst: u32) {
 }
 
 fn handle_muldiv(reg: &mut RegisterFile, funct3: u32, rd: usize, rs1: usize, rs2: usize) {
-    const FUNCT3_MUL  : u32 = 0b000;
-    const FUNCT3_MULH : u32 = 0b001;
+    const FUNCT3_MUL    : u32 = 0b000;
+    const FUNCT3_MULH   : u32 = 0b001;
+    const FUNCT3_MULHSU : u32 = 0b010;
 
     match funct3 {
         FUNCT3_MUL => {
@@ -409,6 +410,11 @@ fn handle_muldiv(reg: &mut RegisterFile, funct3: u32, rd: usize, rs1: usize, rs2
         FUNCT3_MULH => {
             info!("mulh {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
             let tmp = ((reg.x[rs1] as i64) as i128).wrapping_mul((reg.x[rs2] as i64) as i128);
+            reg.x[rd] = (tmp >> XLEN) as u64;
+        },
+        FUNCT3_MULHSU => {
+            info!("mulhsu {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+            let tmp = ((reg.x[rs1] as i64) as i128).wrapping_mul((reg.x[rs2] as u64) as i128);
             reg.x[rd] = (tmp >> XLEN) as u64;
         },
         _ => warn!("{}: {}: unknown funct3 0x{:x}",
