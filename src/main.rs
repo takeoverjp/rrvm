@@ -922,10 +922,10 @@ mod tests {
             | (opcode as u32);
     }
 
-    fn inst_u(_imm:u32, _rd:u8, _opcode:u8) -> u32 {
+    fn inst_u(_imm:u32, _rd:u8, _opcode:u32) -> u32 {
         let imm    = _imm    & ((1 << 20) - 1);
         let rd     = _rd     & ((1 <<  5) - 1);
-        let opcode = _opcode & ((1 <<  7) - 1);
+        let opcode = (_opcode << 2 | 0b11) & ((1 <<  7) - 1);
         return ((imm as u32)   << (5 + 7))
             | ((rd as u32)     << 7)
             | (opcode as u32);
@@ -1153,7 +1153,7 @@ mod tests {
     #[test]
     fn test_auipc() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_u(0x123, 2, 0b0010111);
+        let inst: u32 = inst_u(0x123, 2, AUIPC);
         reg.pc = 0xabc;
         handle_auipc(&mut reg, inst);
         assert_eq!(0x123abc, reg.x[2], "0x{:x}", reg.x[2])
@@ -1162,7 +1162,7 @@ mod tests {
     #[test]
     fn test_auipc_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_u(-8i32 as u32, 2, 0b0010111);
+        let inst: u32 = inst_u(-8i32 as u32, 2, AUIPC);
         reg.pc = 0x8abc;
         handle_auipc(&mut reg, inst);
         assert_eq!(0xabc, reg.x[2], "0x{:x}", reg.x[2])
@@ -1171,7 +1171,7 @@ mod tests {
     #[test]
     fn test_lui() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_u(0x123, 2, 0b0110111);
+        let inst: u32 = inst_u(0x123, 2, LUI);
         handle_lui(&mut reg, inst);
         assert_eq!(0x123000, reg.x[2], "0x{:x}", reg.x[2])
     }
@@ -1179,7 +1179,7 @@ mod tests {
     #[test]
     fn test_lui_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_u(-8i32 as u32, 2, 0b0110111);
+        let inst: u32 = inst_u(-8i32 as u32, 2, LUI);
         handle_lui(&mut reg, inst);
         assert_eq!((-8i64 * 0x1000) as u64, reg.x[2], "0x{:x}", reg.x[2])
     }
