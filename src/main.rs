@@ -894,12 +894,12 @@ fn main() {
 mod tests {
     use super::*;
 
-    fn inst_i(_imm:u16, _rs1:u8, _funct3:u8, _rd:u8, _opcode:u8) -> u32 {
+    fn inst_i(_imm:u16, _rs1:u8, _funct3:u32, _rd:u8, _opcode:u32) -> u32 {
         let imm    = _imm    & ((1 << 12) - 1);
         let rs1    = _rs1    & ((1 <<  5) - 1);
         let funct3 = _funct3 & ((1 <<  3) - 1);
         let rd     = _rd     & ((1 <<  5) - 1);
-        let opcode = _opcode & ((1 <<  7) - 1);
+        let opcode = (_opcode << 2 | 0b11) & ((1 <<  7) - 1);
         return ((imm as u32)   << (5 + 3 + 5 + 7))
             | ((rs1 as u32)    << (3 + 5 + 7))
             | ((funct3 as u32) << (5 + 7))
@@ -994,7 +994,7 @@ mod tests {
     #[test]
     fn test_addi() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(7, 1, 0b000, 2, 0b0010011);
+        let inst: u32 = inst_i(7, 1, FUNCT3_ADDI, 2, OP_IMM);
         reg.x[1] = 0b001;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b1000, reg.x[2]);
@@ -1003,7 +1003,7 @@ mod tests {
     #[test]
     fn test_addi_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(-4i16 as u16, 1, 0b000, 2, 0b0010011);
+        let inst: u32 = inst_i(-4i16 as u16, 1, FUNCT3_ADDI, 2, OP_IMM);
         reg.x[1] = 0b001;
         handle_op_imm(&mut reg, inst);
         assert_eq!(-3i64 as u64, reg.x[2]);
@@ -1030,7 +1030,7 @@ mod tests {
     #[test]
     fn test_slti() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(7, 1, 0b010, 2, 0b0010011);
+        let inst: u32 = inst_i(7, 1, FUNCT3_SLTI, 2, OP_IMM);
         reg.x[1] = 0b111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0, reg.x[2]);
@@ -1047,7 +1047,7 @@ mod tests {
     #[test]
     fn test_sltiu() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(7, 1, 0b011, 2, 0b0010011);
+        let inst: u32 = inst_i(7, 1, FUNCT3_SLTIU, 2, OP_IMM);
         reg.x[1] = 0b111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(reg.x[2], 0);
@@ -1064,7 +1064,7 @@ mod tests {
     #[test]
     fn test_xori_pos() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b001010101010, 1, 0b100, 2, 0b0010011);
+        let inst: u32 = inst_i(0b001010101010, 1, FUNCT3_XORI, 2, OP_IMM);
         reg.x[1] = 0b111111111111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b110101010101, reg.x[2],
@@ -1074,7 +1074,7 @@ mod tests {
     #[test]
     fn test_xori_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b101010101010, 1, 0b100, 2, 0b0010011);
+        let inst: u32 = inst_i(0b101010101010, 1, FUNCT3_XORI, 2, OP_IMM);
         reg.x[1] = 0b111111111111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0xffff_ffff_ffff_f555, reg.x[2],
@@ -1124,7 +1124,7 @@ mod tests {
     #[test]
     fn test_ori_pos() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b0010101_01010, 1, 0b110, 2, 0b0010011);
+        let inst: u32 = inst_i(0b0010101_01010, 1, FUNCT3_ORI, 2, OP_IMM);
         reg.x[1] = 0b010111000000;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b011111101010, reg.x[2],
@@ -1134,7 +1134,7 @@ mod tests {
     #[test]
     fn test_ori_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b1010101_01010, 1, 0b110, 2, 0b0010011);
+        let inst: u32 = inst_i(0b1010101_01010, 1, FUNCT3_ORI, 2, OP_IMM);
         reg.x[1] = 0b010111000000;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0xffff_ffff_ffff_ffea, reg.x[2],
@@ -1144,7 +1144,7 @@ mod tests {
     #[test]
     fn test_andi() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b1010101_01010, 1, 0b111, 2, 0b0010011);
+        let inst: u32 = inst_i(0b1010101_01010, 1, FUNCT3_ANDI, 2, OP_IMM);
         reg.x[1] = 0b010101111111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b000000101010, reg.x[2], "{:b}", reg.x[2]);
