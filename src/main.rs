@@ -396,9 +396,6 @@ fn handle_muldiv(reg: &mut RegisterFile, funct3: u32, rd: usize, rs1: usize, rs2
 
 fn handle_op(reg: &mut RegisterFile, inst: u32) {
     const SHIFT_MASK     : u64 = 0b111111;
-    const FUNCT7_MULDIV  : u32 = 0b0000001;
-    const FUNCT7_SRL     : u32 = 0b0000000;
-    const FUNCT7_SRA     : u32 = 0b0100000;
 
     let funct3 = get_funct3(inst);
     let rd     = get_rd(inst) as usize;
@@ -475,11 +472,6 @@ fn handle_lui(reg: &mut RegisterFile, inst: u32) {
 }
 
 fn handle_op_32(reg: &mut RegisterFile, inst: u32) {
-    const FUNCT7_ADDW      : u32 = 0b0000000;
-    const FUNCT7_SUBW      : u32 = 0b0100000;
-    const FUNCT3_SLLW      : u32 = 0b001;
-    const FUNCT7_SRLW      : u32 = 0b0000000;
-    const FUNCT7_SRAW      : u32 = 0b0100000;
     const SHIFT_MASK       : u32 = 0b11111;
 
     let funct3 = get_funct3(inst);
