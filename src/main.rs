@@ -907,13 +907,13 @@ mod tests {
             | (opcode as u32);
     }
 
-    fn inst_i_shamt(_l_or_a:u8, _shamt:u8, _rs1:u8, _funct3:u8, _rd:u8, _opcode:u8) -> u32 {
+    fn inst_i_shamt(_l_or_a:u8, _shamt:u8, _rs1:u8, _funct3:u32, _rd:u8, _opcode:u32) -> u32 {
         let l_or_a = _l_or_a & ((1 << 6) - 1);
         let shamt  = _shamt  & ((1 << 6) - 1);
         let rs1    = _rs1    & ((1 << 5) - 1);
         let funct3 = _funct3 & ((1 << 3) - 1);
         let rd     = _rd     & ((1 << 5) - 1);
-        let opcode = _opcode & ((1 << 7) - 1);
+        let opcode = (_opcode << 2 | 0b11) & ((1 << 7) - 1);
         return ((l_or_a as u32) << (6 + 5 + 3 + 5 + 7))
             | ((shamt as u32)   << (5 + 3 + 5 + 7))
             | ((rs1 as u32)     << (3 + 5 + 7))
@@ -1012,7 +1012,7 @@ mod tests {
     #[test]
     fn test_slli() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i_shamt(0b000000, 7, 1, 0b001, 2, 0b0010011);
+        let inst: u32 = inst_i_shamt(0b000000, 7, 1, FUNCT3_SLLI, 2, OP_IMM);
         reg.x[1] = 1;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b10000000, reg.x[2]);
@@ -1021,7 +1021,7 @@ mod tests {
     #[test]
     fn test_slli_6bit() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i_shamt(0b000000, 32, 1, 0b001, 2, 0b0010011);
+        let inst: u32 = inst_i_shamt(0b000000, 32, 1, FUNCT3_SLLI, 2, OP_IMM);
         reg.x[1] = 1;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0x1_0000_0000, reg.x[2]);
@@ -1084,7 +1084,7 @@ mod tests {
     #[test]
     fn test_srli() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i_shamt(0b000000, 4, 1, 0b101, 2, 0b0010011);
+        let inst: u32 = inst_i_shamt(0b000000, 4, 1, FUNCT3_SRLI_SRAI, 2, OP_IMM);
         reg.x[1] = 0xffff_ffff_ffff_ffff;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0x0fff_ffff_ffff_ffff, reg.x[2],
@@ -1094,7 +1094,7 @@ mod tests {
     #[test]
     fn test_srli_6bit() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i_shamt(0b000000, 32, 1, 0b101, 2, 0b0010011);
+        let inst: u32 = inst_i_shamt(0b000000, 32, 1, FUNCT3_SRLI_SRAI, 2, OP_IMM);
         reg.x[1] = 0x123_0000_0000;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0x123, reg.x[2],
@@ -1104,7 +1104,7 @@ mod tests {
     #[test]
     fn test_srai() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i_shamt(0b010000, 4, 1, 0b101, 2, 0b0010011);
+        let inst: u32 = inst_i_shamt(0b010000, 4, 1, FUNCT3_SRLI_SRAI, 2, OP_IMM);
         reg.x[1] = 0xffff_ffff_ffff_ffff;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0xffff_ffff_ffff_ffff, reg.x[2],
@@ -1114,7 +1114,7 @@ mod tests {
     #[test]
     fn test_srai_6bit() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i_shamt(0b010000, 32, 1, 0b101, 2, 0b0010011);
+        let inst: u32 = inst_i_shamt(0b010000, 32, 1, FUNCT3_SRLI_SRAI, 2, OP_IMM);
         reg.x[1] = 0x123_0000_0000;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0x123, reg.x[2],
