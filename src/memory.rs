@@ -13,8 +13,18 @@ impl<'a> Memory<'a> {
         Memory {
             map: vec,
             elf: elf,
-            entry_point_address: elf.entry_point_address(),
-            entry_point_offset: elf.entry_point_offset().unwrap(),
+            entry_point_address:
+            if elf.is_elf() {
+                elf.entry_point_address()
+            } else {
+                0
+            },
+            entry_point_offset:
+            if elf.is_elf() {
+                elf.entry_point_offset().unwrap()
+            } else {
+                0
+            },
         }
     }
 

@@ -7,7 +7,18 @@ pub struct Elf {
 }
 
 impl Elf {
+    fn new_empty() -> Elf {
+        Elf {
+            hdr: ElfHeader::new_empty(),
+            sec: vec![],
+        }
+    }
+
     pub fn new(bin: &[u8]) -> Elf {
+        if bin.len() < 0x40 {
+            return Elf::new_empty();
+        }
+
         let mut this = Elf {
             hdr: ElfHeader::new(&bin[0..0x40]),
             sec: vec![],
@@ -106,7 +117,36 @@ struct ElfHeader {
 }
 
 impl ElfHeader {
+    fn new_empty() -> ElfHeader {
+        ElfHeader {
+            ei_magic:      [0; 4],
+            ei_class:      0,
+            ei_data:       0,
+            ei_version:    0,
+            ei_osabi:      0,
+            ei_abiversion: 0,
+            _ei_pad:       [0; 7],
+            e_type:        0x0,
+            e_machine:     0x0,
+            e_version:     0x0,
+            e_entry:       0x0,
+            e_phoff:       0x0,
+            e_shoff:       0x0,
+            e_flags:       0x0,
+            e_ehsize:      0x0,
+            e_phentsize:   0x0,
+            e_phnum:       0x0,
+            e_shentsize:   0x0,
+            e_shnum:       0x0,
+            e_shstrndx:    0x0,
+        }
+    }
+
     fn new(bin: &[u8]) -> ElfHeader {
+        if bin.len() < 0x40 {
+            return ElfHeader::new_empty();
+        }
+
         ElfHeader {
             ei_magic:      [bin[0], bin[1], bin[2], bin[3]],
             ei_class:      bin[4],
