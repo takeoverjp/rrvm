@@ -493,6 +493,10 @@ fn handle_op_32(reg: &mut RegisterFile, inst: u32) {
                 info!("subw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
                 reg.x[rd] = sign_ext(rs1w.wrapping_sub(rs2w) as u64, 32) as u64;
             },
+            FUNCT7_MULW => {
+                info!("mulw {},{},{}", ABI_NAME[rd], ABI_NAME[rs1], ABI_NAME[rs2]);
+                reg.x[rd] = sign_ext(rs1w.wrapping_mul(rs2w) as u64, 32) as u64;
+            },
             _ => warn!("{}: {}: unknown funct7 0x{:x}",
                           file!(), line!(), funct7)
         },

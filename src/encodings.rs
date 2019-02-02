@@ -59,6 +59,7 @@ pub const FUNCT7_ADD    : u32 = 0b0000000;
 pub const FUNCT7_SUB    : u32 = 0b0100000;
 pub const FUNCT7_ADDW   : u32 = 0b0000000;
 pub const FUNCT7_SUBW   : u32 = 0b0100000;
+pub const FUNCT7_MULW   : u32 = 0b0000001;
 pub const FUNCT7_SRLW   : u32 = 0b0000000;
 pub const FUNCT7_SRAW   : u32 = 0b0100000;
 
