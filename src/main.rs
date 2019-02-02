@@ -852,6 +852,10 @@ fn main() {
             println!("core   0: 0x{:016x} (0x{:08x}", reg.pc, inst);
         }
 
+        let is_comp = (inst & 0b11) != 0b11;
+        if is_comp {
+            debug!("Compressed instruction! 0b{:032b}", inst);
+        }
         let opcode = get_opcode(inst);
         match opcode {
             LOAD          => handle_load(&mem, &mut reg, inst),
