@@ -821,6 +821,12 @@ fn parse_args() -> Args {
     }
 }
 
+fn decompress(c_inst: u16) -> u32 {
+    println!("c_inst = 0x{:04x}", c_inst);
+
+    0xffffffff
+}
+
 fn main() {
     let args = parse_args();
     debug!("{:?}", args);
@@ -849,7 +855,8 @@ fn main() {
         let is_comp = (mem.lb(reg.pc) & 0b11) != 0b11;
         if is_comp {
             let c_inst = mem.lh(reg.pc);
-            info!("{:08x}: 0x{:04x} (compressed)", reg.pc, c_inst);
+            let inst = decompress(c_inst);
+            info!("{:08x}: 0x{:04x} -> 0x{:08x} (compressed)", reg.pc, c_inst, inst);
             unimplemented!();
         }
 
@@ -1215,5 +1222,23 @@ mod tests {
         let inst: u32 = inst_u(-8i32 as u32, 2, LUI);
         handle_lui(&mut reg, inst);
         assert_eq!((-8i64 * 0x1000) as u64, reg.x[2], "0x{:x}", reg.x[2])
+    }
+
+    fn inst_cr(_funct4:u8, _rd:u8, _rs2:u8, _opcode:u8) -> u16 {
+        let funct4 = _funct4 & ((1 <<  4) - 1);
+        let rd     = _rd     & ((1 <<  5) - 1);
+        let rs2    = _rs2    & ((1 <<  5) - 1);
+        let opcode = _opcode & ((1 <<  2) - 1);
+        return ((funct4 as u16)   << (5 + 5 + 2))
+            | ((rd as u16)    << (5 + 2))
+            | ((rs2 as u16) << (2))
+            | (opcode as u16);
+    }
+
+    #[test]
+    fn test_c_add() {
+        let c_inst: u16 = inst_cr(0b1001, 1, 2, 0b10);
+        let inst: u32 = 0x0;
+        assert_eq!(inst, decompress(c_inst));
     }
 }
