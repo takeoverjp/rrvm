@@ -979,6 +979,20 @@ mod tests {
     }
 
     #[test]
+    fn test_sub() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = inst_r(FUNCT7_SUB, 1, 2, FUNCT3_ADD_SUB, 3, OP);
+        reg.x[1] = 0x2;
+        reg.x[2] = 0x3;
+
+        handle_op(&mut reg, inst);
+
+        assert_eq!(0x1, reg.x[3]);
+        assert_eq!(0x2, reg.x[1]);
+        assert_eq!(0x3, reg.x[2]);
+    }
+
+    #[test]
     fn test_lb() {
         let mut reg = RegisterFile::new();
         let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
