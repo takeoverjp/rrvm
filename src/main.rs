@@ -967,7 +967,7 @@ mod tests {
     #[test]
     fn test_add() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_r(FUNCT7_ADD, 1, 2, FUNCT3_ADD_SUB, 3, LOAD);
+        let inst: u32 = inst_r(FUNCT7_ADD, 1, 2, FUNCT3_ADD_SUB, 3, OP);
         reg.x[1] = 0x2;
         reg.x[2] = 0x3;
 
