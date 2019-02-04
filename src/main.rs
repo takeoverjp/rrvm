@@ -912,6 +912,21 @@ fn main() {
 mod tests {
     use super::*;
 
+    fn inst_r(_funct7:u32, _rs2:u8, _rs1:u8, _funct3:u32, _rd:u8, _opcode:u32) -> u32 {
+        let funct7 = _funct7 & ((1 <<  7) - 1);
+        let rs2    = _rs2    & ((1 <<  5) - 1);
+        let rs1    = _rs1    & ((1 <<  5) - 1);
+        let funct3 = _funct3 & ((1 <<  3) - 1);
+        let rd     = _rd     & ((1 <<  5) - 1);
+        let opcode = (_opcode << 2 | 0b11) & ((1 <<  7) - 1);
+        return ((funct7 as u32) << (5 + 5 + 3 + 5 + 7))
+            | ((rs2 as u32)     << (5 + 3 + 5 + 7))
+            | ((rs1 as u32)     << (3 + 5 + 7))
+            | ((funct3 as u32)  << (5 + 7))
+            | ((rd as u32)      << 7)
+            | (opcode as u32);
+    }
+
     fn inst_i(_imm:u16, _rs1:u8, _funct3:u32, _rd:u8, _opcode:u32) -> u32 {
         let imm    = _imm    & ((1 << 12) - 1);
         let rs1    = _rs1    & ((1 <<  5) - 1);
@@ -947,6 +962,20 @@ mod tests {
         return ((imm as u32)   << (5 + 7))
             | ((rd as u32)     << 7)
             | (opcode as u32);
+    }
+
+    #[test]
+    fn test_add() {
+        let mut reg = RegisterFile::new();
+        let inst: u32 = inst_r(FUNCT7_ADD, 1, 2, FUNCT3_ADD_SUB, 3, LOAD);
+        reg.x[1] = 0x2;
+        reg.x[2] = 0x3;
+
+        handle_op(&mut reg, inst);
+
+        assert_eq!(0x05, reg.x[3]);
+        assert_eq!(0x02, reg.x[1]);
+        assert_eq!(0x03, reg.x[2]);
     }
 
     #[test]
