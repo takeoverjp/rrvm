@@ -1281,7 +1281,7 @@ mod tests {
     #[test]
     fn test_c_add() {
         let c_inst: u16 = inst_cr(0b1001, 1, 2, 0b10);
-        let inst: u32 = 0x0;
+        let inst: u32 = inst_r(FUNCT7_ADD, 1, 1, FUNCT3_ADD_SUB, 2, OP);
         assert_eq!(inst, decompress(c_inst));
     }
 }
