@@ -1267,7 +1267,7 @@ mod tests {
         assert_eq!((-8i64 * 0x1000) as u64, reg.x[2], "0x{:x}", reg.x[2])
     }
 
-    fn inst_cr(_funct4:u8, _rd:u8, _rs2:u8, _opcode:u8) -> u16 {
+    fn inst_cr(_funct4:u16, _rd:u8, _rs2:u8, _opcode:u16) -> u16 {
         let funct4 = _funct4 & ((1 <<  4) - 1);
         let rd     = _rd     & ((1 <<  5) - 1);
         let rs2    = _rs2    & ((1 <<  5) - 1);
@@ -1280,7 +1280,7 @@ mod tests {
 
     #[test]
     fn test_c_add() {
-        let c_inst: u16 = inst_cr(0b1001, 1, 2, 0b10);
+        let c_inst: u16 = inst_cr(FUNCT4_C_ADD, 1, 2, OP_C2);
         let inst: u32 = inst_r(FUNCT7_ADD, 1, 1, FUNCT3_ADD_SUB, 2, OP);
         assert_eq!(inst, decompress(c_inst));
     }
