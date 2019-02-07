@@ -1279,8 +1279,15 @@ mod tests {
     }
 
     #[test]
+    fn test_c_mv() {
+        let c_inst: u16 = inst_cr(FUNCT4_C_MV, 2, 1, OP_C2);
+        let inst: u32 = inst_r(FUNCT7_ADD, 0, 1, FUNCT3_ADD_SUB, 2, OP);
+        assert_eq!(inst, decompress(c_inst));
+    }
+
+    #[test]
     fn test_c_add() {
-        let c_inst: u16 = inst_cr(FUNCT4_C_ADD, 1, 2, OP_C2);
+        let c_inst: u16 = inst_cr(FUNCT4_C_ADD, 2, 1, OP_C2);
         let inst: u32 = inst_r(FUNCT7_ADD, 1, 1, FUNCT3_ADD_SUB, 2, OP);
         assert_eq!(inst, decompress(c_inst));
     }
