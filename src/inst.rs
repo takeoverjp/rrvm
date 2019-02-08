@@ -49,3 +49,14 @@ pub fn inst_u(_imm:u32, _rd:u8, _opcode:u32) -> u32 {
         | ((rd as u32)     << 7)
         | (opcode as u32);
 }
+
+pub fn inst_cr(_funct4:u16, _rd:u8, _rs2:u8, _opcode:u16) -> u16 {
+    let funct4 = _funct4 & ((1 <<  4) - 1);
+    let rd     = _rd     & ((1 <<  5) - 1);
+    let rs2    = _rs2    & ((1 <<  5) - 1);
+    let opcode = _opcode & ((1 <<  2) - 1);
+    return ((funct4 as u16)   << (5 + 5 + 2))
+        | ((rd as u16)    << (5 + 2))
+        | ((rs2 as u16) << (2))
+        | (opcode as u16);
+}

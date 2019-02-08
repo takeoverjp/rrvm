@@ -1217,17 +1217,6 @@ mod tests {
         assert_eq!((-8i64 * 0x1000) as u64, reg.x[2], "0x{:x}", reg.x[2])
     }
 
-    fn inst_cr(_funct4:u16, _rd:u8, _rs2:u8, _opcode:u16) -> u16 {
-        let funct4 = _funct4 & ((1 <<  4) - 1);
-        let rd     = _rd     & ((1 <<  5) - 1);
-        let rs2    = _rs2    & ((1 <<  5) - 1);
-        let opcode = _opcode & ((1 <<  2) - 1);
-        return ((funct4 as u16)   << (5 + 5 + 2))
-            | ((rd as u16)    << (5 + 2))
-            | ((rs2 as u16) << (2))
-            | (opcode as u16);
-    }
-
     #[test]
     fn test_c_mv() {
         let c_inst: u16 = inst_cr(FUNCT4_C_MV, 2, 1, OP_C2);
