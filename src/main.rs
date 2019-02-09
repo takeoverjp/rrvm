@@ -993,7 +993,8 @@ mod tests {
         let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
         let elf = Elf::new(&vec);
         let mem = Memory::new(&mut vec, &elf);
-        let inst: u32 = inst_i(4, 1, FUNCT3_LH, 2, LOAD);
+        // lh r2, 4(r1)
+        let inst: u32 = inst_lh(2, 4, 1);
         reg.x[1] = 0x2;
 
         handle_load(&mem, &mut reg, inst);
@@ -1007,7 +1008,8 @@ mod tests {
         let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 0xfe, 0xff];
         let elf = Elf::new(&vec);
         let mem = Memory::new(&mut vec, &elf);
-        let inst: u32 = inst_i(4, 1, FUNCT3_LH, 2, LOAD);
+        // lh r2, 4(r1)
+        let inst: u32 = inst_lh(2, 4, 1);
         reg.x[1] = 0x2;
 
         handle_load(&mem, &mut reg, inst);
@@ -1021,7 +1023,8 @@ mod tests {
         let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
         let elf = Elf::new(&vec);
         let mem = Memory::new(&mut vec, &elf);
-        let inst: u32 = inst_i(-4i16 as u16, 1, FUNCT3_LH, 2, LOAD);
+        // lh r2, 4(r1)
+        let inst: u32 = inst_lh(2, -4i16 as u16, 1);
         reg.x[1] = 10;
         handle_load(&mem, &mut reg, inst);
         assert_eq!(0x0706, reg.x[2]);
