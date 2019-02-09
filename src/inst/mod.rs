@@ -81,3 +81,12 @@ pub fn inst_add(rd:usize, rs1:usize, rs2:usize) -> u32 {
 pub fn inst_sub(rd:usize, rs1:usize, rs2:usize) -> u32 {
     inst_r(FUNCT7_SUB, rs2 as u8, rs1 as u8, FUNCT3_ADD_SUB, rd as u8, OP)
 }
+
+/// Returns instruction code of `lb`.
+///
+/// ```asm
+/// lb rd, offset(rs1)
+/// ```
+pub fn inst_lb(rd:usize, offset: u16, rs1:usize) -> u32 {
+    inst_i(offset, rs1 as u8, FUNCT3_LB, rd as u8, LOAD)
+}
