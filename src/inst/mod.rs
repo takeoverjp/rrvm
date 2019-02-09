@@ -1,3 +1,6 @@
+pub mod encodings;
+pub use encodings::*;
+
 pub fn inst_r(_funct7:u32, _rs2:u8, _rs1:u8, _funct3:u32, _rd:u8, _opcode:u32) -> u32 {
     let funct7 = _funct7 & ((1 <<  7) - 1);
     let rs2    = _rs2    & ((1 <<  5) - 1);
@@ -59,4 +62,8 @@ pub fn inst_cr(_funct4:u16, _rd:u8, _rs2:u8, _opcode:u16) -> u16 {
         | ((rd as u16)    << (5 + 2))
         | ((rs2 as u16) << (2))
         | (opcode as u16);
+}
+
+pub fn inst_add(rd:u8, rs1:u8, rs2:u8) -> u32 {
+    inst_r(FUNCT7_ADD, rs2, rs1, FUNCT3_ADD_SUB, rd, OP)
 }

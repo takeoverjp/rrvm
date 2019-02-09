@@ -5,13 +5,11 @@ extern crate getopts;
 extern crate memmap;
 extern crate hex;
 
-mod encodings;
 mod inst;
 mod csr;
 mod elf;
 mod memory;
 
-use encodings::*;
 use inst::*;
 use csr::*;
 use elf::*;
@@ -917,7 +915,7 @@ mod tests {
     #[test]
     fn test_add() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_r(FUNCT7_ADD, 1, 2, FUNCT3_ADD_SUB, 3, OP);
+        let inst: u32 = inst_add(3, 1, 2);
         reg.x[1] = 0x2;
         reg.x[2] = 0x3;
 
