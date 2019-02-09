@@ -915,29 +915,31 @@ mod tests {
     #[test]
     fn test_add() {
         let mut reg = RegisterFile::new();
+        // add r3, r1, r2
         let inst: u32 = inst_add(3, 1, 2);
-        reg.x[1] = 0x2;
-        reg.x[2] = 0x3;
+        reg.x[1] = 2;
+        reg.x[2] = 3;
 
         handle_op(&mut reg, inst);
 
-        assert_eq!(0x05, reg.x[3]);
-        assert_eq!(0x02, reg.x[1]);
-        assert_eq!(0x03, reg.x[2]);
+        assert_eq!(reg.x[1] + reg.x[2], reg.x[3]);
+        assert_eq!(2, reg.x[1]);
+        assert_eq!(3, reg.x[2]);
     }
 
     #[test]
     fn test_sub() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_r(FUNCT7_SUB, 1, 2, FUNCT3_ADD_SUB, 3, OP);
-        reg.x[1] = 0x2;
-        reg.x[2] = 0x3;
+        // sub r3, r1, r2
+        let inst: u32 = inst_sub(3, 1, 2);
+        reg.x[1] = 3;
+        reg.x[2] = 2;
 
         handle_op(&mut reg, inst);
 
-        assert_eq!(0x1, reg.x[3]);
-        assert_eq!(0x2, reg.x[1]);
-        assert_eq!(0x3, reg.x[2]);
+        assert_eq!(reg.x[1] - reg.x[2], reg.x[3]);
+        assert_eq!(3, reg.x[1]);
+        assert_eq!(2, reg.x[2]);
     }
 
     #[test]

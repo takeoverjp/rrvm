@@ -64,6 +64,20 @@ pub fn inst_cr(_funct4:u16, _rd:u8, _rs2:u8, _opcode:u16) -> u16 {
         | (opcode as u16);
 }
 
-pub fn inst_add(rd:u8, rs1:u8, rs2:u8) -> u32 {
-    inst_r(FUNCT7_ADD, rs2, rs1, FUNCT3_ADD_SUB, rd, OP)
+/// Returns instruction code of `add`.
+///
+/// ```asm
+/// add rd, rs1, rs2
+/// ```
+pub fn inst_add(rd:usize, rs1:usize, rs2:usize) -> u32 {
+    inst_r(FUNCT7_ADD, rs2 as u8, rs1 as u8, FUNCT3_ADD_SUB, rd as u8, OP)
+}
+
+/// Returns instruction code of `sub`.
+///
+/// ```asm
+/// sub rd, rs1, rs2
+/// ```
+pub fn inst_sub(rd:usize, rs1:usize, rs2:usize) -> u32 {
+    inst_r(FUNCT7_SUB, rs2 as u8, rs1 as u8, FUNCT3_ADD_SUB, rd as u8, OP)
 }
