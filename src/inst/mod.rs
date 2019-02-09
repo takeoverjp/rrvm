@@ -99,3 +99,21 @@ pub fn inst_lb(rd:usize, offset: u16, rs1:usize) -> u32 {
 pub fn inst_lh(rd:usize, offset: u16, rs1:usize) -> u32 {
     inst_i(offset, rs1 as u8, FUNCT3_LH, rd as u8, LOAD)
 }
+
+/// Returns instruction code of `c.mv`.
+///
+/// ```asm
+/// c.mv rd, rs2
+/// ```
+pub fn inst_c_mv(rd:usize, rs2:usize) -> u16 {
+    inst_cr(FUNCT4_C_MV, rd as u8, rs2 as u8, OP_C2)
+}
+
+/// Returns instruction code of `c.add`.
+///
+/// ```asm
+/// c.add rd, rs2
+/// ```
+pub fn inst_c_add(rd:usize, rs2:usize) -> u16 {
+    inst_cr(FUNCT4_C_ADD, rd as u8, rs2 as u8, OP_C2)
+}
