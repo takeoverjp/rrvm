@@ -225,6 +225,21 @@ fn test_is_c_mv() {
     assert_eq!(false, is_c_mv(inst_c_add(2, 1)));
 }
 
+/// Decompresses `c.mv rd, rs2` to `add rd, rs0, rs2`.
+pub fn dec_c_mv(inst:u16) -> u32 {
+    let rd  = extract16(inst, 7, 5) as usize;
+    let rs2 = extract16(inst, 2, 5) as usize;
+
+    inst_add(rd, 0, rs2)
+}
+
+#[test]
+fn test_dec_c_mv() {
+    assert_eq!(inst_add( 2, 0,  1),  dec_c_mv(inst_c_mv( 2,  1)));
+    assert_eq!(inst_add(31, 0,  1),  dec_c_mv(inst_c_mv(31,  1)));
+    assert_eq!(inst_add( 2, 0, 31),  dec_c_mv(inst_c_mv( 2, 31)));
+}
+
 /// Returns instruction code of `c.add`.
 ///
 /// ```asm
@@ -237,7 +252,11 @@ pub fn inst_c_add(rd:usize, rs2:usize) -> u16 {
 pub fn decompress(c_inst: u16) -> u32 {
     println!("c_inst = 0x{:04x}", c_inst);
 
-    0xffffffff
+    if is_c_mv (c_inst) {
+        dec_c_mv (c_inst)
+    } else {
+        0xffffffff
+    }
 }
 
 #[cfg(test)]
