@@ -1210,7 +1210,7 @@ mod tests {
     #[test]
     fn test_lui() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_u(0x123, 2, LUI);
+        let inst: u32 = inst_lui(2, 0x123);
         handle_lui(&mut reg, inst);
         assert_eq!(0x123000, reg.x[2], "0x{:x}", reg.x[2])
     }
@@ -1218,7 +1218,7 @@ mod tests {
     #[test]
     fn test_lui_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_u(-8i32 as u32, 2, LUI);
+        let inst: u32 = inst_lui(2, -8i32 as u32);
         handle_lui(&mut reg, inst);
         assert_eq!((-8i64 * 0x1000) as u64, reg.x[2], "0x{:x}", reg.x[2])
     }

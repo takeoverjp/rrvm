@@ -109,6 +109,15 @@ pub fn inst_auipc(rd:usize, immidiate: u32) -> u32 {
     inst_u(immidiate, rd as u8, AUIPC)
 }
 
+/// Returns instruction code of `lui`.
+///
+/// ```asm
+/// lui rd, immediate
+/// ```
+pub fn inst_lui(rd:usize, immidiate: u32) -> u32 {
+    inst_u(immidiate, rd as u8, LUI)
+}
+
 /// Returns instruction code of `c.mv`.
 ///
 /// ```asm
