@@ -163,6 +163,24 @@ pub fn inst_srai(rd:usize, rs1:usize, shamt: u8) -> u32 {
     inst_i_shamt(0b010000, shamt, rs1 as u8, FUNCT3_SRLI_SRAI, rd as u8, OP_IMM)
 }
 
+/// Returns instruction code of `ori`.
+///
+/// ```asm
+/// ori rd, rs1, immediate
+/// ```
+pub fn inst_ori(rd:usize, rs1:usize, immediate: u16) -> u32 {
+    inst_i(immediate, rs1 as u8, FUNCT3_ORI, rd as u8, OP_IMM)
+}
+
+/// Returns instruction code of `andi`.
+///
+/// ```asm
+/// andi rd, rs1, immediate
+/// ```
+pub fn inst_andi(rd:usize, rs1:usize, immediate: u16) -> u32 {
+    inst_i(immediate, rs1 as u8, FUNCT3_ANDI, rd as u8, OP_IMM)
+}
+
 /// Returns instruction code of `auipc`.
 ///
 /// ```asm
