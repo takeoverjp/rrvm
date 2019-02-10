@@ -71,3 +71,9 @@ $ cargo run ${RISCV}/target/share/riscv-tests/isa/rv64ui-p-addi.bin -o 0x8000000
 $ spike --isa=rv64gc -l  ${RISCV}/target/share/riscv-tests/isa/rv64ui-p-addi 2>&1 | cut -d")" -f 1 > spike.log
 $ diff -u spike.log rrvm.log
 ```
+
+# Howto build documentation
+
+```
+$ cargo doc --no-deps --open --document-private-items
+```
