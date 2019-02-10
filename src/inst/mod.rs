@@ -145,6 +145,24 @@ pub fn inst_xori(rd:usize, rs1:usize, immediate: u16) -> u32 {
     inst_i(immediate, rs1 as u8, FUNCT3_XORI, rd as u8, OP_IMM)
 }
 
+/// Returns instruction code of `srli`.
+///
+/// ```asm
+/// srli rd, rs1, shamt
+/// ```
+pub fn inst_srli(rd:usize, rs1:usize, shamt: u8) -> u32 {
+    inst_i_shamt(0b000000, shamt, rs1 as u8, FUNCT3_SRLI_SRAI, rd as u8, OP_IMM)
+}
+
+/// Returns instruction code of `srai`.
+///
+/// ```asm
+/// srai rd, rs1, shamt
+/// ```
+pub fn inst_srai(rd:usize, rs1:usize, shamt: u8) -> u32 {
+    inst_i_shamt(0b010000, shamt, rs1 as u8, FUNCT3_SRLI_SRAI, rd as u8, OP_IMM)
+}
+
 /// Returns instruction code of `auipc`.
 ///
 /// ```asm
