@@ -68,6 +68,19 @@ fn inst_cr(_funct4:u16, _rd:u8, _rs2:u8, _opcode:u16) -> u16 {
         | (opcode as u16);
 }
 
+fn inst_ci(_funct3:u16, _rd:u8, _imm:u8, _opcode:u16) -> u16 {
+    let funct3 = _funct3 & ((1 <<  4) - 1);
+    let rd     = _rd     & ((1 <<  5) - 1);
+    let imm_hi = (_imm    & ((1 <<  6) - 1)) >> 5;
+    let imm_lo = _imm    & ((1 <<  5) - 1);
+    let opcode = _opcode & ((1 <<  2) - 1);
+    return ((funct3 as u16)   << (1 + 5 + 5 + 2))
+        | ((imm_hi as u16)    << (5 + 5 + 2))
+        | ((rd as u16)    << (5 + 2))
+        | ((imm_lo as u16) << (2))
+        | (opcode as u16);
+}
+
 /// Returns instruction code of `add`.
 ///
 /// ```asm
@@ -107,10 +120,10 @@ pub fn inst_lh(rd:usize, offset: u16, rs1:usize) -> u32 {
 /// Returns instruction code of `addi`.
 ///
 /// ```asm
-/// addi rd, rs1, immediate
+/// addi rd, rs1, imm
 /// ```
-pub fn inst_addi(rd:usize, rs1:usize, immediate: u16) -> u32 {
-    inst_i(immediate, rs1 as u8, FUNCT3_ADDI, rd as u8, OP_IMM)
+pub fn inst_addi(rd:usize, rs1:usize, imm: u16) -> u32 {
+    inst_i(imm, rs1 as u8, FUNCT3_ADDI, rd as u8, OP_IMM)
 }
 
 /// Returns instruction code of `slli`.
@@ -125,28 +138,28 @@ pub fn inst_slli(rd:usize, rs1:usize, shamt: u8) -> u32 {
 /// Returns instruction code of `slti`.
 ///
 /// ```asm
-/// slti rd, rs1, immediate
+/// slti rd, rs1, imm
 /// ```
-pub fn inst_slti(rd:usize, rs1:usize, immediate: u16) -> u32 {
-    inst_i(immediate, rs1 as u8, FUNCT3_SLTI, rd as u8, OP_IMM)
+pub fn inst_slti(rd:usize, rs1:usize, imm: u16) -> u32 {
+    inst_i(imm, rs1 as u8, FUNCT3_SLTI, rd as u8, OP_IMM)
 }
 
 /// Returns instruction code of `sltiu`.
 ///
 /// ```asm
-/// sltiu rd, rs1, immediate
+/// sltiu rd, rs1, imm
 /// ```
-pub fn inst_sltiu(rd:usize, rs1:usize, immediate: u16) -> u32 {
-    inst_i(immediate, rs1 as u8, FUNCT3_SLTIU, rd as u8, OP_IMM)
+pub fn inst_sltiu(rd:usize, rs1:usize, imm: u16) -> u32 {
+    inst_i(imm, rs1 as u8, FUNCT3_SLTIU, rd as u8, OP_IMM)
 }
 
 /// Returns instruction code of `xori`.
 ///
 /// ```asm
-/// xori rd, rs1, immediate
+/// xori rd, rs1, imm
 /// ```
-pub fn inst_xori(rd:usize, rs1:usize, immediate: u16) -> u32 {
-    inst_i(immediate, rs1 as u8, FUNCT3_XORI, rd as u8, OP_IMM)
+pub fn inst_xori(rd:usize, rs1:usize, imm: u16) -> u32 {
+    inst_i(imm, rs1 as u8, FUNCT3_XORI, rd as u8, OP_IMM)
 }
 
 /// Returns instruction code of `srli`.
@@ -170,25 +183,25 @@ pub fn inst_srai(rd:usize, rs1:usize, shamt: u8) -> u32 {
 /// Returns instruction code of `ori`.
 ///
 /// ```asm
-/// ori rd, rs1, immediate
+/// ori rd, rs1, imm
 /// ```
-pub fn inst_ori(rd:usize, rs1:usize, immediate: u16) -> u32 {
-    inst_i(immediate, rs1 as u8, FUNCT3_ORI, rd as u8, OP_IMM)
+pub fn inst_ori(rd:usize, rs1:usize, imm: u16) -> u32 {
+    inst_i(imm, rs1 as u8, FUNCT3_ORI, rd as u8, OP_IMM)
 }
 
 /// Returns instruction code of `andi`.
 ///
 /// ```asm
-/// andi rd, rs1, immediate
+/// andi rd, rs1, imm
 /// ```
-pub fn inst_andi(rd:usize, rs1:usize, immediate: u16) -> u32 {
-    inst_i(immediate, rs1 as u8, FUNCT3_ANDI, rd as u8, OP_IMM)
+pub fn inst_andi(rd:usize, rs1:usize, imm: u16) -> u32 {
+    inst_i(imm, rs1 as u8, FUNCT3_ANDI, rd as u8, OP_IMM)
 }
 
 /// Returns instruction code of `auipc`.
 ///
 /// ```asm
-/// auipc rd, immediate
+/// auipc rd, imm
 /// ```
 pub fn inst_auipc(rd:usize, immidiate: u32) -> u32 {
     inst_u(immidiate, rd as u8, AUIPC)
@@ -197,7 +210,7 @@ pub fn inst_auipc(rd:usize, immidiate: u32) -> u32 {
 /// Returns instruction code of `lui`.
 ///
 /// ```asm
-/// lui rd, immediate
+/// lui rd, imm
 /// ```
 pub fn inst_lui(rd:usize, immidiate: u32) -> u32 {
     inst_u(immidiate, rd as u8, LUI)
@@ -277,15 +290,55 @@ fn test_dec_c_add() {
     assert_eq!(inst_add( 2,  2, 31),  dec_c_add(inst_c_add( 2, 31)));
 }
 
-pub fn decompress(c_inst: u16) -> u32 {
-    println!("c_inst = 0x{:04x}", c_inst);
+/// Returns instruction code of `c.addi`.
+///
+/// ```asm
+/// c.addi rd, imm
+/// ```
+pub fn inst_c_addi(rd:usize, imm:u8) -> u16 {
+    inst_ci(FUNCT3_C_ADDI, rd as u8, imm, OP_C1)
+}
 
+/// Returns whether `c.addi` or not.
+pub fn is_c_addi(inst:u16) -> bool {
+    let funct3 = extract16(inst, 13, 3);
+    let opcode = extract16(inst, 0, 2);
+    (funct3 == FUNCT3_C_ADDI) && (opcode == OP_C1)
+}
+
+#[test]
+fn test_is_c_addi() {
+    assert_eq!(true,  is_c_addi(inst_c_addi(2, 1)));
+    assert_eq!(false, is_c_addi(inst_c_add(2, 1)));
+    assert_eq!(false, is_c_addi(inst_c_mv(2, 1)));
+}
+
+/// Decompresses `c.addi rd, imm` to `addi rd, rd, imm`.
+pub fn dec_c_addi(inst:u16) -> u32 {
+    let rd  = extract16(inst, 7, 5) as usize;
+    let imm_hi = extract16(inst, 12, 1);
+    let imm_lo = extract16(inst, 2, 5);
+    let imm = (imm_hi << 5) | imm_lo;
+
+    inst_addi(rd, rd, imm)
+}
+
+#[test]
+fn test_dec_c_addi() {
+    assert_eq!(inst_addi(2, 2, 1), dec_c_addi(inst_c_addi(2, 1)));
+    assert_eq!(inst_addi(31,31, 1), dec_c_addi(inst_c_addi(31, 1)));
+    assert_eq!(inst_addi(2, 2, 0b11_1111), dec_c_addi(inst_c_addi(2, 0b11_1111)));
+}
+
+pub fn decompress(c_inst: u16) -> u32 {
     if is_c_mv (c_inst) {
         dec_c_mv (c_inst)
     } else if is_c_add (c_inst) {
         dec_c_add (c_inst)
+    } else if is_c_addi (c_inst) {
+        dec_c_addi (c_inst)
     } else {
-        0xffffffff
+        unimplemented!("c_inst = 0x{:04x}", c_inst)
     }
 }
 
