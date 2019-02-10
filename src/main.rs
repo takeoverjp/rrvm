@@ -847,14 +847,15 @@ fn main() {
 
     loop {
         let is_comp = (mem.lb(reg.pc) & 0b11) != 0b11;
-        if is_comp {
+        let inst = if is_comp {
             let c_inst = mem.lh(reg.pc);
             let inst = decompress(c_inst);
             info!("{:08x}: 0x{:04x} -> 0x{:08x} (compressed)", reg.pc, c_inst, inst);
-            unimplemented!();
-        }
+            inst
+        } else {
+            mem.lw(reg.pc)
+        };
 
-        let inst : u32 = mem.lw(reg.pc);
         info!("{:08x}: 0x{:08x}", reg.pc, inst);
         if args.log_spike {
             println!("core   0: 0x{:016x} (0x{:08x}", reg.pc, inst);
