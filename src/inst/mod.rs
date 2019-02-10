@@ -249,11 +249,41 @@ pub fn inst_c_add(rd:usize, rs2:usize) -> u16 {
     inst_cr(FUNCT4_C_ADD, rd as u8, rs2 as u8, OP_C2)
 }
 
+/// Returns whether `c.add` or not.
+pub fn is_c_add(inst:u16) -> bool {
+    let funct4 = extract16(inst, 12, 4);
+    let opcode = extract16(inst, 0, 2);
+    (funct4 == FUNCT4_C_ADD) && (opcode == OP_C2)
+}
+
+#[test]
+fn test_is_c_add() {
+    assert_eq!(true,  is_c_add(inst_c_add(2, 1)));
+    assert_eq!(false, is_c_add(inst_c_mv(2, 1)));
+}
+
+/// Decompresses `c.add rd, rs2` to `add rd, rd, rs2`.
+pub fn dec_c_add(inst:u16) -> u32 {
+    let rd  = extract16(inst, 7, 5) as usize;
+    let rs2 = extract16(inst, 2, 5) as usize;
+
+    inst_add(rd, rd, rs2)
+}
+
+#[test]
+fn test_dec_c_add() {
+    assert_eq!(inst_add( 2,  2,  1),  dec_c_add(inst_c_add( 2,  1)));
+    assert_eq!(inst_add(31, 31,  1),  dec_c_add(inst_c_add(31,  1)));
+    assert_eq!(inst_add( 2,  2, 31),  dec_c_add(inst_c_add( 2, 31)));
+}
+
 pub fn decompress(c_inst: u16) -> u32 {
     println!("c_inst = 0x{:04x}", c_inst);
 
     if is_c_mv (c_inst) {
         dec_c_mv (c_inst)
+    } else if is_c_add (c_inst) {
+        dec_c_add (c_inst)
     } else {
         0xffffffff
     }
