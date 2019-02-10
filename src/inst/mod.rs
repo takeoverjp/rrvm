@@ -109,6 +109,15 @@ pub fn inst_addi(rd:usize, rs1:usize, immediate: u16) -> u32 {
     inst_i(immediate, rs1 as u8, FUNCT3_ADDI, rd as u8, OP_IMM)
 }
 
+/// Returns instruction code of `slli`.
+///
+/// ```asm
+/// slli rd, rs1, shamt
+/// ```
+pub fn inst_slli(rd:usize, rs1:usize, shamt: u8) -> u32 {
+    inst_i_shamt(0b000000, shamt, rs1 as u8, FUNCT3_SLLI, rd as u8, OP_IMM)
+}
+
 /// Returns instruction code of `auipc`.
 ///
 /// ```asm

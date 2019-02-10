@@ -1051,7 +1051,7 @@ mod tests {
     #[test]
     fn test_slli() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i_shamt(0b000000, 7, 1, FUNCT3_SLLI, 2, OP_IMM);
+        let inst: u32 = inst_slli(2, 1, 7);
         reg.x[1] = 1;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b10000000, reg.x[2]);
@@ -1060,7 +1060,7 @@ mod tests {
     #[test]
     fn test_slli_6bit() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i_shamt(0b000000, 32, 1, FUNCT3_SLLI, 2, OP_IMM);
+        let inst: u32 = inst_slli(2, 1, 32);
         reg.x[1] = 1;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0x1_0000_0000, reg.x[2]);
