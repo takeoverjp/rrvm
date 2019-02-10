@@ -100,6 +100,15 @@ pub fn inst_lh(rd:usize, offset: u16, rs1:usize) -> u32 {
     inst_i(offset, rs1 as u8, FUNCT3_LH, rd as u8, LOAD)
 }
 
+/// Returns instruction code of `auipc`.
+///
+/// ```asm
+/// auipc rd, immediate
+/// ```
+pub fn inst_auipc(rd:usize, immidiate: u32) -> u32 {
+    inst_u(immidiate, rd as u8, AUIPC)
+}
+
 /// Returns instruction code of `c.mv`.
 ///
 /// ```asm
