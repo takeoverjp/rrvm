@@ -1033,7 +1033,7 @@ mod tests {
     #[test]
     fn test_addi() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(7, 1, FUNCT3_ADDI, 2, OP_IMM);
+        let inst: u32 = inst_addi(2, 1, 7);
         reg.x[1] = 0b001;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b1000, reg.x[2]);
@@ -1042,7 +1042,7 @@ mod tests {
     #[test]
     fn test_addi_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(-4i16 as u16, 1, FUNCT3_ADDI, 2, OP_IMM);
+        let inst: u32 = inst_addi(2, 1, -4i16 as u16);
         reg.x[1] = 0b001;
         handle_op_imm(&mut reg, inst);
         assert_eq!(-3i64 as u64, reg.x[2]);

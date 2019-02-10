@@ -100,6 +100,15 @@ pub fn inst_lh(rd:usize, offset: u16, rs1:usize) -> u32 {
     inst_i(offset, rs1 as u8, FUNCT3_LH, rd as u8, LOAD)
 }
 
+/// Returns instruction code of `addi`.
+///
+/// ```asm
+/// addi rd, rs1, immediate
+/// ```
+pub fn inst_addi(rd:usize, rs1:usize, immediate: u16) -> u32 {
+    inst_i(immediate, rs1 as u8, FUNCT3_ADDI, rd as u8, OP_IMM)
+}
+
 /// Returns instruction code of `auipc`.
 ///
 /// ```asm
