@@ -1,6 +1,10 @@
 pub mod encodings;
 pub use encodings::*;
 
+fn extract16(bits:u16, lo:u8, len:u8) -> u16 {
+    (bits >> lo) & ((1 << len) - 1)
+}
+
 fn inst_r(_funct7:u32, _rs2:u8, _rs1:u8, _funct3:u32, _rd:u8, _opcode:u32) -> u32 {
     let funct7 = _funct7 & ((1 <<  7) - 1);
     let rs2    = _rs2    & ((1 <<  5) - 1);
@@ -206,6 +210,19 @@ pub fn inst_lui(rd:usize, immidiate: u32) -> u32 {
 /// ```
 pub fn inst_c_mv(rd:usize, rs2:usize) -> u16 {
     inst_cr(FUNCT4_C_MV, rd as u8, rs2 as u8, OP_C2)
+}
+
+/// Returns whether `c.mv` or not.
+pub fn is_c_mv(inst:u16) -> bool {
+    let funct4 = extract16(inst, 12, 4);
+    let opcode = extract16(inst, 0, 2);
+    (funct4 == FUNCT4_C_MV) && (opcode == OP_C2)
+}
+
+#[test]
+fn test_is_c_mv() {
+    assert_eq!(true,  is_c_mv(inst_c_mv(2, 1)));
+    assert_eq!(false, is_c_mv(inst_c_add(2, 1)));
 }
 
 /// Returns instruction code of `c.add`.
