@@ -821,12 +821,6 @@ fn parse_args() -> Args {
     }
 }
 
-fn decompress(c_inst: u16) -> u32 {
-    println!("c_inst = 0x{:04x}", c_inst);
-
-    0xffffffff
-}
-
 fn main() {
     let args = parse_args();
     debug!("{:?}", args);
@@ -1221,23 +1215,5 @@ mod tests {
         let inst: u32 = inst_lui(2, -8i32 as u32);
         handle_lui(&mut reg, inst);
         assert_eq!((-8i64 * 0x1000) as u64, reg.x[2], "0x{:x}", reg.x[2])
-    }
-
-    #[test]
-    fn test_c_mv() {
-        // c.mv r2, r1
-        let c_inst: u16 = inst_c_mv(2, 1);
-        // add r2, r0, r1
-        let inst: u32 = inst_add(2, 0, 1);
-        assert_eq!(inst, decompress(c_inst));
-    }
-
-    #[test]
-    fn test_c_add() {
-        // c.add r2, r1
-        let c_inst: u16 = inst_c_add(2, 1);
-        // add r2, r2, r1
-        let inst: u32 = inst_add(2, 2, 1);
-        assert_eq!(inst, decompress(c_inst));
     }
 }
