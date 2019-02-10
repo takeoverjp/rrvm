@@ -1069,7 +1069,7 @@ mod tests {
     #[test]
     fn test_slti() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(7, 1, FUNCT3_SLTI, 2, OP_IMM);
+        let inst: u32 = inst_slti(2, 1, 7);
         reg.x[1] = 0b111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0, reg.x[2]);
@@ -1086,7 +1086,7 @@ mod tests {
     #[test]
     fn test_sltiu() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(7, 1, FUNCT3_SLTIU, 2, OP_IMM);
+        let inst: u32 = inst_sltiu(2, 1, 7);
         reg.x[1] = 0b111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(reg.x[2], 0);
