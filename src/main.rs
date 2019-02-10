@@ -1103,7 +1103,7 @@ mod tests {
     #[test]
     fn test_xori_pos() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b001010101010, 1, FUNCT3_XORI, 2, OP_IMM);
+        let inst: u32 = inst_xori(2, 1, 0b001010101010);
         reg.x[1] = 0b111111111111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0b110101010101, reg.x[2],
@@ -1113,7 +1113,7 @@ mod tests {
     #[test]
     fn test_xori_neg() {
         let mut reg = RegisterFile::new();
-        let inst: u32 = inst_i(0b101010101010, 1, FUNCT3_XORI, 2, OP_IMM);
+        let inst: u32 = inst_xori(2, 1, 0b101010101010);
         reg.x[1] = 0b111111111111;
         handle_op_imm(&mut reg, inst);
         assert_eq!(0xffff_ffff_ffff_f555, reg.x[2],

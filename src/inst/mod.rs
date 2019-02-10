@@ -136,6 +136,15 @@ pub fn inst_sltiu(rd:usize, rs1:usize, immediate: u16) -> u32 {
     inst_i(immediate, rs1 as u8, FUNCT3_SLTIU, rd as u8, OP_IMM)
 }
 
+/// Returns instruction code of `xori`.
+///
+/// ```asm
+/// xori rd, rs1, immediate
+/// ```
+pub fn inst_xori(rd:usize, rs1:usize, immediate: u16) -> u32 {
+    inst_i(immediate, rs1 as u8, FUNCT3_XORI, rd as u8, OP_IMM)
+}
+
 /// Returns instruction code of `auipc`.
 ///
 /// ```asm
