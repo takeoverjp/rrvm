@@ -1,6 +1,10 @@
 pub mod encodings;
 pub use encodings::*;
 
+fn extract8(bits:u8, lo:u8, len:u8) -> u8 {
+    (bits >> lo) & ((1 << len) - 1)
+}
+
 fn extract16(bits:u16, lo:u8, len:u8) -> u16 {
     (bits >> lo) & ((1 << len) - 1)
 }
@@ -330,6 +334,65 @@ fn test_dec_c_addi() {
     assert_eq!(inst_addi(2, 2, 0b11_1111), dec_c_addi(inst_c_addi(2, 0b11_1111)));
 }
 
+/// Returns instruction code of `c.addi16sp`.
+///
+/// ```asm
+/// c.addi16sp sp, imm
+/// ```
+pub fn inst_c_addi16sp(rd:usize, imm:u8) -> u16 {
+    assert_eq!(2, rd);
+    let imm_9   = extract8(imm, 5, 1);
+    let imm_8_7 = extract8(imm, 3, 2);
+    let imm_6   = extract8(imm, 2, 1);
+    let imm_5   = extract8(imm, 1, 1);
+    let imm_4   = extract8(imm, 0, 1);
+    let imm = (imm_9 << 5)
+        | (imm_4 << 4)
+        | (imm_6 << 3)
+        | (imm_8_7 << 1)
+        | imm_5;
+    inst_ci(FUNCT3_C_ADDI16SP, rd as u8, imm, OP_C1)
+}
+
+/// Returns whether `c.addi` or not.
+pub fn is_c_addi16sp(inst:u16) -> bool {
+    let funct3 = extract16(inst, 13, 3);
+    let rd     = extract16(inst, 7, 5);
+    let opcode = extract16(inst, 0, 2);
+    (funct3 == FUNCT3_C_ADDI16SP) && (rd == 2) && (opcode == OP_C1)
+}
+
+#[test]
+fn test_is_c_addi16sp() {
+    assert_eq!(true,  is_c_addi16sp(inst_c_addi16sp(2, 1)));
+    assert_eq!(false, is_c_addi16sp(inst_c_addi(2, 1)));
+    assert_eq!(false, is_c_addi16sp(inst_c_add(2, 1)));
+    assert_eq!(false, is_c_addi16sp(inst_c_mv(2, 1)));
+}
+
+/// Decompresses `c.addi16sp imm` to `addi sp, sp, imm*16`.
+pub fn dec_c_addi16sp(inst:u16) -> u32 {
+    let rd  = extract16(inst, 7, 5) as usize;
+    let imm_9   = extract16(inst, 12, 1);
+    let imm_8_7 = extract16(inst, 3, 2);
+    let imm_6   = extract16(inst, 5, 1);
+    let imm_5   = extract16(inst, 2, 1);
+    let imm_4   = extract16(inst, 6, 1);
+    let imm = (imm_9 << 9)
+        | (imm_8_7 << 7)
+        | (imm_6 << 6)
+        | (imm_5 << 5)
+        | (imm_4 << 4);
+
+    inst_addi(rd, rd, imm)
+}
+
+#[test]
+fn test_dec_c_addi16sp() {
+    assert_eq!(inst_addi(2, 2, 1*16), dec_c_addi16sp(inst_c_addi16sp(2, 1)));
+    assert_eq!(inst_addi(2, 2, 0b11_1111*16), dec_c_addi16sp(inst_c_addi16sp(2, 0b11_1111)));
+}
+
 pub fn decompress(c_inst: u16) -> u32 {
     if is_c_mv (c_inst) {
         dec_c_mv (c_inst)
@@ -337,6 +400,8 @@ pub fn decompress(c_inst: u16) -> u32 {
         dec_c_add (c_inst)
     } else if is_c_addi (c_inst) {
         dec_c_addi (c_inst)
+    } else if is_c_addi16sp (c_inst) {
+        dec_c_addi16sp (c_inst)
     } else {
         unimplemented!("c_inst = 0x{:04x}", c_inst)
     }
