@@ -896,7 +896,11 @@ fn main() {
                           file!(), line!(), opcode)
         }
 
-        reg.pc += 4;
+        if is_comp {
+            reg.pc += 2;
+        } else {
+            reg.pc += 4;
+        }
         reg.x[0] = 0;
 
         reg.dump();
