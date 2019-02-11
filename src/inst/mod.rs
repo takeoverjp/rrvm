@@ -85,6 +85,17 @@ fn inst_ci(_funct3:u16, _rd:u8, _imm:u8, _opcode:u16) -> u16 {
         | (opcode as u16);
 }
 
+fn inst_ciw(_funct3:u16, _imm:u8, _rd:u8, _opcode:u16) -> u16 {
+    let funct3 = _funct3 & ((1 <<  4) - 1);
+    let imm    = _imm;
+    let rd     = _rd     & ((1 <<  3) - 1);
+    let opcode = _opcode & ((1 <<  2) - 1);
+    return ((funct3 as u16)   << (8 + 3 + 2))
+        | ((imm as u16) << (3 + 2))
+        | ((rd as u16) << 2)
+        | (opcode as u16);
+}
+
 /// Returns instruction code of `add`.
 ///
 /// ```asm
@@ -393,6 +404,60 @@ fn test_dec_c_addi16sp() {
     assert_eq!(inst_addi(2, 2, 0b11_1111*16), dec_c_addi16sp(inst_c_addi16sp(2, 0b11_1111)));
 }
 
+/// Returns instruction code of `c.addi4spn`.
+///
+/// ```asm
+/// c.addi4spn rd, uimm
+/// ```
+pub fn inst_c_addi4spn(rd:usize, uimm:u8) -> u16 {
+    let uimm_9_6 = extract8(uimm, 4, 4);
+    let uimm_5_4 = extract8(uimm, 2, 2);
+    let uimm_3   = extract8(uimm, 1, 1);
+    let uimm_2   = extract8(uimm, 0, 1);
+    let uimm = (uimm_5_4 << 6)
+        | (uimm_9_6 << 2)
+        | (uimm_2 << 1)
+        | uimm_3;
+    inst_ciw(FUNCT3_C_ADDI4SPN, uimm, (rd+8) as u8, OP_C0)
+}
+
+/// Returns whether `c.addi4spn` or not.
+pub fn is_c_addi4spn(inst:u16) -> bool {
+    let funct3 = extract16(inst, 13, 3);
+    let opcode = extract16(inst, 0, 2);
+    (funct3 == FUNCT3_C_ADDI4SPN) && (opcode == OP_C0)
+}
+
+#[test]
+fn test_is_c_addi4spn() {
+    assert_eq!(true,  is_c_addi4spn(inst_c_addi4spn(2, 1)));
+    assert_eq!(false, is_c_addi4spn(inst_c_addi16sp(2, 1)));
+    assert_eq!(false, is_c_addi4spn(inst_c_addi(2, 1)));
+    assert_eq!(false, is_c_addi4spn(inst_c_add(2, 1)));
+    assert_eq!(false, is_c_addi4spn(inst_c_mv(2, 1)));
+}
+
+/// Decompresses `c.addi4spn rd', uimm` to `addi rd, sp, imm*4`.
+pub fn dec_c_addi4spn(inst:u16) -> u32 {
+    let rd  = (extract16(inst, 2, 3) as usize) + 8;
+    let uimm_9_6 = extract16(inst,  7, 4);
+    let uimm_5_4 = extract16(inst, 11, 2);
+    let uimm_3   = extract16(inst,  5, 1);
+    let uimm_2   = extract16(inst,  6, 1);
+    let uimm = (uimm_9_6 << 6)
+        | (uimm_5_4 << 4)
+        | (uimm_3 << 3)
+        | (uimm_2 << 2);
+
+    inst_addi(rd, 2, uimm)
+}
+
+#[test]
+fn test_dec_c_addi4spn() {
+    assert_eq!(inst_addi(2+8, 2, 1*4), dec_c_addi4spn(inst_c_addi4spn(2, 1)));
+    assert_eq!(inst_addi(2+8, 2, 0b11_1111*4), dec_c_addi4spn(inst_c_addi4spn(2, 0b11_1111)));
+}
+
 pub fn decompress(c_inst: u16) -> u32 {
     if is_c_mv (c_inst) {
         dec_c_mv (c_inst)
@@ -402,6 +467,8 @@ pub fn decompress(c_inst: u16) -> u32 {
         dec_c_addi (c_inst)
     } else if is_c_addi16sp (c_inst) {
         dec_c_addi16sp (c_inst)
+    } else if is_c_addi4spn (c_inst) {
+        dec_c_addi4spn (c_inst)
     } else {
         unimplemented!("c_inst = 0x{:04x}", c_inst)
     }

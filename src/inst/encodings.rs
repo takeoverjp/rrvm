@@ -116,14 +116,14 @@ pub const FUNCT3_CSRRWI       : u32 = 0b101;
 pub const FUNCT3_CSRRSI       : u32 = 0b110;
 pub const FUNCT3_CSRRCI       : u32 = 0b111;
 
-pub const _OP_C0 : u16 = 0b00;
+pub const OP_C0 : u16 = 0b00;
 pub const OP_C1 : u16 = 0b01;
 pub const OP_C2 : u16 = 0b10;
 pub const FUNCT4_C_MV       : u16 = 0b1000;
 pub const FUNCT4_C_ADD      : u16 = 0b1001;
 pub const FUNCT3_C_ADDI     : u16 = 0b100;
 pub const FUNCT3_C_ADDI16SP : u16 = 0b011;
-pub const _FUNCT3_C_ADDI4SPN : u16 = 0b000;
+pub const FUNCT3_C_ADDI4SPN : u16 = 0b000;
 
 pub fn get_opcode(inst: u32) -> u32 {
     (inst & OPCODE_MASK) >> OPCODE_SHIFT
