@@ -354,7 +354,7 @@ pub fn inst_c_addi16sp(rd:usize, imm:u8) -> u16 {
     inst_ci(FUNCT3_C_ADDI16SP, rd as u8, imm, OP_C1)
 }
 
-/// Returns whether `c.addi` or not.
+/// Returns whether `c.addi16sp` or not.
 pub fn is_c_addi16sp(inst:u16) -> bool {
     let funct3 = extract16(inst, 13, 3);
     let rd     = extract16(inst, 7, 5);
