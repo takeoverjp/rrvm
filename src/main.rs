@@ -21,8 +21,6 @@ use std::fs::File;
 use getopts::Options;
 use memmap::MmapOptions;
 
-const XLEN: u32 = 64;
-
 #[derive(Debug)]
 struct Args {
     prog: String,
@@ -80,40 +78,6 @@ fn get_memmap(file_path: &str) -> memmap::Mmap {
     };
 
     mmap
-}
-
-fn sign_ext(val: u64, size: u8) -> i64 {
-    if size == XLEN as u8 {
-        return val as i64;
-    }
-
-    let mut ret = val as i64;
-
-    let sign_mask = if size == 1 {
-        1
-    } else {
-        1 << (size - 1)
-    };
-
-    let mask: i64 = 1 << (64 - size);
-    let mask = mask.wrapping_sub(1) << size;
-    if (val & sign_mask) != 0 {
-        ret |= mask;
-    } else {
-        ret &= !mask;
-    }
-
-    ret
-}
-
-#[test]
-fn test_sign_ext() {
-    assert_eq!(-1, sign_ext(0xf, 4));
-    assert_eq!(7, sign_ext(0x7, 4));
-    assert_eq!(7, sign_ext(0xf007, 4));
-    assert_eq!(-1, sign_ext(0xff, 8));
-    assert_eq!(0x7f, sign_ext(0x7f, 8));
-    assert_eq!(0x7f, sign_ext(0xf07f, 8));
 }
 
 fn handle_load(mem: &Memory, reg: &mut RegisterFile, inst: u32) {

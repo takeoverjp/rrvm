@@ -9,6 +9,40 @@ fn extract16(bits:u16, lo:u8, len:u8) -> u16 {
     (bits >> lo) & ((1 << len) - 1)
 }
 
+pub fn sign_ext(val: u64, size: u8) -> i64 {
+    if size == 64 as u8 {
+        return val as i64;
+    }
+
+    let mut ret = val as i64;
+
+    let sign_mask = if size == 1 {
+        1
+    } else {
+        1 << (size - 1)
+    };
+
+    let mask: i64 = 1 << (64 - size);
+    let mask = mask.wrapping_sub(1) << size;
+    if (val & sign_mask) != 0 {
+        ret |= mask;
+    } else {
+        ret &= !mask;
+    }
+
+    ret
+}
+
+#[test]
+fn test_sign_ext() {
+    assert_eq!(-1, sign_ext(0xf, 4));
+    assert_eq!(7, sign_ext(0x7, 4));
+    assert_eq!(7, sign_ext(0xf007, 4));
+    assert_eq!(-1, sign_ext(0xff, 8));
+    assert_eq!(0x7f, sign_ext(0x7f, 8));
+    assert_eq!(0x7f, sign_ext(0xf07f, 8));
+}
+
 fn inst_r(_funct7:u32, _rs2:u8, _rs1:u8, _funct3:u32, _rd:u8, _opcode:u32) -> u32 {
     let funct7 = _funct7 & ((1 <<  7) - 1);
     let rs2    = _rs2    & ((1 <<  5) - 1);
