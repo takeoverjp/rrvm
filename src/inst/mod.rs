@@ -166,6 +166,15 @@ pub fn inst_lh(rd:usize, offset: u16, rs1:usize) -> u32 {
     inst_i(offset, rs1 as u8, FUNCT3_LH, rd as u8, LOAD)
 }
 
+/// Returns instruction code of `lw`.
+///
+/// ```asm
+/// lw rd, offset(rs1)
+/// ```
+pub fn inst_lw(rd:usize, offset: u16, rs1:usize) -> u32 {
+    inst_i(offset, rs1 as u8, FUNCT3_LW, rd as u8, LOAD)
+}
+
 /// Returns instruction code of `addi`.
 ///
 /// ```asm
@@ -369,6 +378,7 @@ pub fn dec_c_addi(inst:u16) -> u32 {
     let imm_lo = extract16(inst, 2, 5);
     let imm = (imm_hi << 5) | imm_lo;
 
+    println!("c.addi rd={} imm={:x}", rd, imm);
     inst_addi(rd, rd, imm)
 }
 
@@ -429,6 +439,7 @@ pub fn dec_c_addi16sp(inst:u16) -> u32 {
         | (imm_5 << 5)
         | (imm_4 << 4);
 
+    println!("c.addi16sp sp imm={:x}", imm);
     inst_addi(rd, rd, imm)
 }
 
@@ -483,6 +494,7 @@ pub fn dec_c_addi4spn(inst:u16) -> u32 {
         | (uimm_3 << 3)
         | (uimm_2 << 2);
 
+    println!("c.addi4spn sp uimm={:x}", uimm);
     inst_addi(rd, 2, uimm)
 }
 
@@ -493,6 +505,7 @@ fn test_dec_c_addi4spn() {
 }
 
 pub fn decompress(c_inst: u16) -> u32 {
+    println!("decompress");
     if is_c_mv (c_inst) {
         dec_c_mv (c_inst)
     } else if is_c_add (c_inst) {

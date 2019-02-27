@@ -994,6 +994,49 @@ mod tests {
     }
 
     #[test]
+    fn test_lw() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // lw r2, 3(r1)
+        let inst: u32 = inst_lw(2, 3, 1);
+        reg.x[1] = 0x1;
+
+        handle_load(&mem, &mut reg, inst);
+
+        assert_eq!(0x07060504, reg.x[2]);
+    }
+
+    #[test]
+    fn test_lw_negative_value() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 0xfe, 0xff, 0xff, 0xff];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // lw r2, 3(r1)
+        let inst: u32 = inst_lw(2, 3, 1);
+        reg.x[1] = 0x1;
+
+        handle_load(&mem, &mut reg, inst);
+
+        assert_eq!(-2i64 as u64, reg.x[2]);
+    }
+
+    #[test]
+    fn test_lw_negative_offset() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // lw r2, -3(r1)
+        let inst: u32 = inst_lw(2, -3i16 as u16, 1);
+        reg.x[1] = 7;
+        handle_load(&mem, &mut reg, inst);
+        assert_eq!(0x07060504, reg.x[2]);
+    }
+
+    #[test]
     fn test_addi() {
         let mut reg = RegisterFile::new();
         let inst: u32 = inst_addi(2, 1, 7);
