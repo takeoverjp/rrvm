@@ -1037,6 +1037,49 @@ mod tests {
     }
 
     #[test]
+    fn test_ld() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // ld r2, 3(r1)
+        let inst: u32 = inst_ld(2, 3, 1);
+        reg.x[1] = 0x5;
+
+        handle_load(&mem, &mut reg, inst);
+
+        assert_eq!(0x0f0e0d0c0b0a0908, reg.x[2]);
+    }
+
+    #[test]
+    fn test_ld_negative_value() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // ld r2, 3(r1)
+        let inst: u32 = inst_ld(2, 3, 1);
+        reg.x[1] = 0x5;
+
+        handle_load(&mem, &mut reg, inst);
+
+        assert_eq!(-2i64 as u64, reg.x[2]);
+    }
+
+    #[test]
+    fn test_ld_negative_offset() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // ld r2, -3(r1)
+        let inst: u32 = inst_ld(2, -3i16 as u16, 1);
+        reg.x[1] = 11;
+        handle_load(&mem, &mut reg, inst);
+        assert_eq!(0x0f0e0d0c0b0a0908, reg.x[2]);
+    }
+
+    #[test]
     fn test_addi() {
         let mut reg = RegisterFile::new();
         let inst: u32 = inst_addi(2, 1, 7);
