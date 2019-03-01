@@ -1080,6 +1080,51 @@ mod tests {
     }
 
     #[test]
+    fn test_lbu() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // lbu r2, 4(r1)
+        let inst: u32 = inst_lbu(2, 4, 1);
+        reg.x[1] = 0x2;
+
+        handle_load(&mem, &mut reg, inst);
+
+        assert_eq!(0x06, reg.x[2]);
+    }
+
+    #[test]
+    fn test_lbu_negative_value() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 0xfe, 7];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // lbu r2, 4(r1)
+        let inst: u32 = inst_lbu(2, 4, 1);
+        reg.x[1] = 0x2;
+
+        handle_load(&mem, &mut reg, inst);
+
+        assert_eq!(0xfe as u64, reg.x[2]);
+    }
+
+    #[test]
+    fn test_lbu_negative_offset() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        let elf = Elf::new(&vec);
+        let mem = Memory::new(&mut vec, &elf);
+        // lbu r2, -4(r1)
+        let inst: u32 = inst_lbu(2, -4i16 as u16, 1);
+        reg.x[1] = 10;
+
+        handle_load(&mem, &mut reg, inst);
+
+        assert_eq!(6, reg.x[2]);
+    }
+
+    #[test]
     fn test_addi() {
         let mut reg = RegisterFile::new();
         let inst: u32 = inst_addi(2, 1, 7);

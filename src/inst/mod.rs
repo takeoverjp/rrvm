@@ -184,6 +184,15 @@ pub fn inst_ld(rd:usize, offset: u16, rs1:usize) -> u32 {
     inst_i(offset, rs1 as u8, FUNCT3_LD, rd as u8, LOAD)
 }
 
+/// Returns instruction code of `lb`.
+///
+/// ```asm
+/// lbu rd, offset(rs1)
+/// ```
+pub fn inst_lbu(rd:usize, offset: u16, rs1:usize) -> u32 {
+    inst_i(offset, rs1 as u8, FUNCT3_LBU, rd as u8, LOAD)
+}
+
 /// Returns instruction code of `addi`.
 ///
 /// ```asm
