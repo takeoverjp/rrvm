@@ -130,6 +130,15 @@ fn inst_ciw(_funct3:u16, _imm:u8, _rd:u8, _opcode:u16) -> u16 {
         | (opcode as u16);
 }
 
+fn inst_cj(_funct3:u16, _target:u16, _opcode:u16) -> u16 {
+    let funct3 = _funct3 & ((1 <<  4) - 1);
+    let target = _target & ((1 << 11) - 1);
+    let opcode = _opcode & ((1 <<  2) - 1);
+    return ((funct3 as u16)   << (11 + 2))
+        | ((target as u16) << 2)
+        | (opcode as u16);
+}
+
 /// Returns instruction code of `add`.
 ///
 /// ```asm
