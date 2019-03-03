@@ -95,6 +95,15 @@ fn inst_u(_imm:u32, _rd:u8, _opcode:u32) -> u32 {
         | (opcode as u32);
 }
 
+fn inst_j(_imm:u32, _rd:u8) -> u32 {
+    let imm    = _imm    & ((1 << 20) - 1);
+    let rd     = _rd     & ((1 <<  5) - 1);
+    let opcode = JAL << 2 | 0b11;
+    return ((imm as u32)   << (5 + 7))
+        | ((rd as u32)     << 7)
+        | (opcode as u32);
+}
+
 fn inst_cr(_funct4:u16, _rd:u8, _rs2:u8, _opcode:u16) -> u16 {
     let funct4 = _funct4 & ((1 <<  4) - 1);
     let rd     = _rd     & ((1 <<  5) - 1);
@@ -130,7 +139,7 @@ fn inst_ciw(_funct3:u16, _imm:u8, _rd:u8, _opcode:u16) -> u16 {
         | (opcode as u16);
 }
 
-fn _inst_cj(_funct3:u16, _target:u16, _opcode:u16) -> u16 {
+fn inst_cj(_funct3:u16, _target:u16, _opcode:u16) -> u16 {
     let funct3 = _funct3 & ((1 <<  4) - 1);
     let target = _target & ((1 << 11) - 1);
     let opcode = _opcode & ((1 <<  2) - 1);
@@ -531,6 +540,77 @@ fn test_dec_c_addi4spn() {
     assert_eq!(inst_addi(2+8, 2, 0b11_1111*4), dec_c_addi4spn(inst_c_addi4spn(2, 0b11_1111)));
 }
 
+/// Returns instruction code of `c.j`.
+///
+/// ```asm
+/// c.j offset
+/// ```
+pub fn inst_c_j(offset:u16) -> u16 {
+    let offset_11  = extract16(offset, 11, 1);
+    let offset_4   = extract16(offset, 10, 1);
+    let offset_9_8 = extract16(offset,  8, 2);
+    let offset_10  = extract16(offset,  7, 1);
+    let offset_6   = extract16(offset,  6, 1);
+    let offset_7   = extract16(offset,  5, 1);
+    let offset_3_1 = extract16(offset,  4, 3);
+    let offset_5   = extract16(offset,  1, 1);
+    let target = (offset_11 << 10)
+        | (offset_4 << 9)
+        | (offset_9_8 << 7)
+        | (offset_10 << 6)
+        | (offset_6 << 5)
+        | (offset_7 << 4)
+        | (offset_3_1 << 1)
+        | offset_5;
+    inst_cj(FUNCT3_C_J, target, OP_C1)
+}
+
+/// Returns whether `c.j` or not.
+pub fn is_c_j(inst:u16) -> bool {
+    let funct3 = extract16(inst, 13, 3);
+    let opcode = extract16(inst, 0, 2);
+    (funct3 == FUNCT3_C_J) && (opcode == OP_C1)
+}
+
+#[test]
+fn test_is_c_j() {
+    assert_eq!(true,  is_c_j(inst_c_j(2)));
+    assert_eq!(false, is_c_j(inst_c_addi16sp(2, 1)));
+    assert_eq!(false, is_c_j(inst_c_addi(2, 1)));
+    assert_eq!(false, is_c_j(inst_c_add(2, 1)));
+    assert_eq!(false, is_c_j(inst_c_mv(2, 1)));
+}
+
+/// Decompresses `c.j offset` to `j offset`.
+pub fn dec_c_j(inst:u16) -> u32 {
+    let offset_11  = extract16(inst, 11, 1);
+    let offset_4   = extract16(inst, 10, 1);
+    let offset_9_8 = extract16(inst,  8, 2);
+    let offset_10  = extract16(inst,  7, 1);
+    let offset_6   = extract16(inst,  6, 1);
+    let offset_7   = extract16(inst,  5, 1);
+    let offset_3_1 = extract16(inst,  4, 3);
+    let offset_5   = extract16(inst,  1, 1);
+    let offset = (offset_11 << 11)
+        | (offset_10 << 10)
+        | (offset_9_8 << 8)
+        | (offset_7 << 7)
+        | (offset_6 << 6)
+        | (offset_5 << 5)
+        | (offset_4 << 4)
+        | (offset_3_1 << 1);
+
+    println!("c.j offset={:x}", offset);
+    inst_j(offset as u32, 0)
+}
+
+#[test]
+#[ignore]
+fn test_dec_c_j() {
+    assert_eq!(inst_j(2, 0), dec_c_j(inst_c_j(2)));
+    assert_eq!(inst_j(-2i32 as u32, 0), dec_c_j(inst_c_j(-2i16 as u16)));
+}
+
 pub fn decompress(c_inst: u16) -> u32 {
     println!("decompress");
     if is_c_mv (c_inst) {
@@ -541,8 +621,8 @@ pub fn decompress(c_inst: u16) -> u32 {
         dec_c_addi (c_inst)
     } else if is_c_addi16sp (c_inst) {
         dec_c_addi16sp (c_inst)
-    } else if is_c_addi4spn (c_inst) {
-        dec_c_addi4spn (c_inst)
+    } else if is_c_j (c_inst) {
+        dec_c_j (c_inst)
     } else {
         unimplemented!("c_inst = 0x{:04x}", c_inst)
     }

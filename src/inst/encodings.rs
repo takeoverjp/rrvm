@@ -126,6 +126,7 @@ pub const FUNCT4_C_ADD      : u16 = 0b1001;
 pub const FUNCT3_C_ADDI     : u16 = 0b000;
 pub const FUNCT3_C_ADDI16SP : u16 = 0b011;
 pub const FUNCT3_C_ADDI4SPN : u16 = 0b000;
+pub const FUNCT3_C_J        : u16 = 0b101;
 
 pub fn get_opcode(inst: u32) -> u32 {
     (inst & OPCODE_MASK) >> OPCODE_SHIFT
