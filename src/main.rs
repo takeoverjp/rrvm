@@ -1316,4 +1316,24 @@ mod tests {
         handle_lui(&mut reg, inst);
         assert_eq!((-8i64 * 0x1000) as u64, reg.x[2], "0x{:x}", reg.x[2])
     }
+
+    #[test]
+    fn test_jal() {
+        let mut reg = RegisterFile::new();
+        reg.pc = 0x8000_0000;
+        let inst: u32 = inst_jal(2, 0x2000);
+        handle_jal(&mut reg, inst);
+        assert_eq!(0x8000_2000 - 4, reg.pc, "0x{:x}", reg.pc);
+        assert_eq!(0x8000_0000 + 4, reg.x[2], "0x{:x}", reg.x[2]);
+    }
+
+    #[test]
+    fn test_jal_neg() {
+        let mut reg = RegisterFile::new();
+        reg.pc = 1234;
+        let inst: u32 = inst_jal(2, -234i32 as u32);
+        handle_jal(&mut reg, inst);
+        assert_eq!(1000 - 4, reg.pc);
+        assert_eq!(1234 + 4, reg.x[2]);
+    }
 }

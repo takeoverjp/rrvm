@@ -9,6 +9,10 @@ fn extract16(bits:u16, lo:u8, len:u8) -> u16 {
     (bits >> lo) & ((1 << len) - 1)
 }
 
+fn extract32(bits:u32, lo:u8, len:u8) -> u32 {
+    (bits >> lo) & ((1 << len) - 1)
+}
+
 pub fn sign_ext(val: u64, size: u8) -> i64 {
     if size == 64 as u8 {
         return val as i64;
@@ -95,10 +99,10 @@ fn inst_u(_imm:u32, _rd:u8, _opcode:u32) -> u32 {
         | (opcode as u32);
 }
 
-fn inst_j(_imm:u32, _rd:u8) -> u32 {
+fn inst_j(_imm:u32, _rd:u8, _opcode:u32) -> u32 {
     let imm    = _imm    & ((1 << 20) - 1);
     let rd     = _rd     & ((1 <<  5) - 1);
-    let opcode = JAL << 2 | 0b11;
+    let opcode = _opcode << 2 | 0b11;
     return ((imm as u32)   << (5 + 7))
         | ((rd as u32)     << 7)
         | (opcode as u32);
@@ -308,6 +312,23 @@ pub fn inst_auipc(rd:usize, immidiate: u32) -> u32 {
 /// ```
 pub fn inst_lui(rd:usize, immidiate: u32) -> u32 {
     inst_u(immidiate, rd as u8, LUI)
+}
+
+/// Returns instruction code of `jal`.
+///
+/// ```asm
+/// jal rd, offset
+/// ```
+pub fn inst_jal(rd:usize, offset: u32) -> u32 {
+    let offset_20    = extract32(offset, 20,  1);
+    let offset_10_1  = extract32(offset,  1, 10);
+    let offset_11    = extract32(offset, 11,  1);
+    let offset_19_12 = extract32(offset, 12,  8);
+    let imm = offset_20 << (10 + 1 + 8)
+        | offset_10_1 << (1 + 8)
+        | offset_11 << 8
+        | offset_19_12;
+    inst_j(imm, rd as u8, JAL)
 }
 
 /// Returns instruction code of `c.mv`.
@@ -601,14 +622,16 @@ pub fn dec_c_j(inst:u16) -> u32 {
         | (offset_3_1 << 1);
 
     println!("c.j offset={:x}", offset);
-    inst_j(offset as u32, 0)
+    inst_jal(0, offset as u32)
 }
 
 #[test]
 #[ignore]
 fn test_dec_c_j() {
-    assert_eq!(inst_j(2, 0), dec_c_j(inst_c_j(2)));
-    assert_eq!(inst_j(-2i32 as u32, 0), dec_c_j(inst_c_j(-2i16 as u16)));
+    assert_eq!(inst_jal(0, 2), dec_c_j(inst_c_j(2)),
+               "exp=0x{:016x}, act=0x{:016x}",
+               inst_jal(0, 2), dec_c_j(inst_c_j(2)));
+    assert_eq!(inst_jal(0, -2i32 as u32), dec_c_j(inst_c_j(-2i16 as u16)));
 }
 
 pub fn decompress(c_inst: u16) -> u32 {
