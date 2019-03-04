@@ -328,6 +328,7 @@ pub fn inst_jal(rd:usize, offset: u32) -> u32 {
         | offset_10_1 << (1 + 8)
         | offset_11 << 8
         | offset_19_12;
+    println!("inst_jal: imm_10_1 = 0b{:010b}", offset_10_1);
     inst_j(imm, rd as u8, JAL)
 }
 
@@ -568,13 +569,13 @@ fn test_dec_c_addi4spn() {
 /// ```
 pub fn inst_c_j(offset:u16) -> u16 {
     let offset_11  = extract16(offset, 11, 1);
-    let offset_4   = extract16(offset, 10, 1);
+    let offset_10  = extract16(offset, 10, 1);
     let offset_9_8 = extract16(offset,  8, 2);
-    let offset_10  = extract16(offset,  7, 1);
+    let offset_7   = extract16(offset,  7, 1);
     let offset_6   = extract16(offset,  6, 1);
-    let offset_7   = extract16(offset,  5, 1);
-    let offset_3_1 = extract16(offset,  4, 3);
-    let offset_5   = extract16(offset,  1, 1);
+    let offset_5   = extract16(offset,  5, 1);
+    let offset_4   = extract16(offset,  4, 1);
+    let offset_3_1 = extract16(offset,  1, 2);
     let target = (offset_11 << 10)
         | (offset_4 << 9)
         | (offset_9_8 << 7)
@@ -583,6 +584,8 @@ pub fn inst_c_j(offset:u16) -> u16 {
         | (offset_7 << 4)
         | (offset_3_1 << 1)
         | offset_5;
+    println!("inst_c_j offset_3_1=0b{:03b}", offset_3_1);
+    println!("inst_c_j target=0b{:032b}", target);
     inst_cj(FUNCT3_C_J, target, OP_C1)
 }
 
@@ -604,14 +607,14 @@ fn test_is_c_j() {
 
 /// Decompresses `c.j offset` to `j offset`.
 pub fn dec_c_j(inst:u16) -> u32 {
-    let offset_11  = extract16(inst, 11, 1);
-    let offset_4   = extract16(inst, 10, 1);
-    let offset_9_8 = extract16(inst,  8, 2);
-    let offset_10  = extract16(inst,  7, 1);
-    let offset_6   = extract16(inst,  6, 1);
-    let offset_7   = extract16(inst,  5, 1);
-    let offset_3_1 = extract16(inst,  4, 3);
-    let offset_5   = extract16(inst,  1, 1);
+    let offset_11  = extract16(inst, 12, 1);
+    let offset_4   = extract16(inst, 11, 1);
+    let offset_9_8 = extract16(inst,  9, 2);
+    let offset_10  = extract16(inst,  8, 1);
+    let offset_6   = extract16(inst,  7, 1);
+    let offset_7   = extract16(inst,  6, 1);
+    let offset_3_1 = extract16(inst,  3, 3);
+    let offset_5   = extract16(inst,  2, 1);
     let offset = (offset_11 << 11)
         | (offset_10 << 10)
         | (offset_9_8 << 8)
@@ -621,7 +624,8 @@ pub fn dec_c_j(inst:u16) -> u32 {
         | (offset_4 << 4)
         | (offset_3_1 << 1);
 
-    println!("c.j offset={:x}", offset);
+    println!("c.j offset_3_1=0b{:03b}", offset_3_1);
+    println!("c.j offset=0b{:032b}", offset);
     inst_jal(0, offset as u32)
 }
 
@@ -629,7 +633,7 @@ pub fn dec_c_j(inst:u16) -> u32 {
 #[ignore]
 fn test_dec_c_j() {
     assert_eq!(inst_jal(0, 2), dec_c_j(inst_c_j(2)),
-               "exp=0x{:016x}, act=0x{:016x}",
+               "exp=0b{:032b}, act=0b{:032b}",
                inst_jal(0, 2), dec_c_j(inst_c_j(2)));
     assert_eq!(inst_jal(0, -2i32 as u32), dec_c_j(inst_c_j(-2i16 as u16)));
 }
