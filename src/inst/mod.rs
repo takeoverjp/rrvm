@@ -328,7 +328,11 @@ pub fn inst_jal(rd:usize, offset: u32) -> u32 {
         | offset_10_1 << (1 + 8)
         | offset_11 << 8
         | offset_19_12;
-    println!("inst_jal: imm_10_1 = 0b{:010b}", offset_10_1);
+    // println!("inst_jal: imm = 0b{:020b}", imm);
+    // println!("inst_jal: offset_20 = 0b{:01b}", offset_20);
+    // println!("inst_jal: offset_10_1 = 0b{:010b}", offset_10_1);
+    // println!("inst_jal: offset_11 = 0b{:01b}", offset_11);
+    // println!("inst_jal: offset_19_12 = 0b{:08b}", offset_19_12);
     inst_j(imm, rd as u8, JAL)
 }
 
@@ -575,7 +579,7 @@ pub fn inst_c_j(offset:u16) -> u16 {
     let offset_6   = extract16(offset,  6, 1);
     let offset_5   = extract16(offset,  5, 1);
     let offset_4   = extract16(offset,  4, 1);
-    let offset_3_1 = extract16(offset,  1, 2);
+    let offset_3_1 = extract16(offset,  1, 3);
     let target = (offset_11 << 10)
         | (offset_4 << 9)
         | (offset_9_8 << 7)
@@ -584,8 +588,16 @@ pub fn inst_c_j(offset:u16) -> u16 {
         | (offset_7 << 4)
         | (offset_3_1 << 1)
         | offset_5;
-    println!("inst_c_j offset_3_1=0b{:03b}", offset_3_1);
-    println!("inst_c_j target=0b{:032b}", target);
+    // println!("inst_c_j offset=0b{:016b}", offset);
+    // println!("inst_c_j offset_11=0b{:01b}", offset_11);
+    // println!("inst_c_j offset_4=0b{:01b}", offset_4);
+    // println!("inst_c_j offset_9_8=0b{:02b}", offset_9_8);
+    // println!("inst_c_j offset_10=0b{:01b}", offset_10);
+    // println!("inst_c_j offset_6=0b{:01b}", offset_6);
+    // println!("inst_c_j offset_7=0b{:01b}", offset_7);
+    // println!("inst_c_j offset_3_1=0b{:03b}", offset_3_1);
+    // println!("inst_c_j offset_5=0b{:01b}", offset_5);
+    // println!("inst_c_j target=0b{:032b}", target);
     inst_cj(FUNCT3_C_J, target, OP_C1)
 }
 
@@ -624,17 +636,22 @@ pub fn dec_c_j(inst:u16) -> u32 {
         | (offset_4 << 4)
         | (offset_3_1 << 1);
 
-    println!("c.j offset_3_1=0b{:03b}", offset_3_1);
-    println!("c.j offset=0b{:032b}", offset);
-    inst_jal(0, offset as u32)
+    // println!("c.j inst=0b{:016b}", inst);
+    // println!("c.j offset_11=0b{:01b}", offset_11);
+    // println!("c.j offset_4=0b{:01b}", offset_4);
+    // println!("c.j offset_9_8=0b{:02b}", offset_9_8);
+    // println!("c.j offset_10=0b{:01b}", offset_10);
+    // println!("c.j offset_6=0b{:01b}", offset_6);
+    // println!("c.j offset_7=0b{:01b}", offset_7);
+    // println!("c.j offset_3_1=0b{:03b}", offset_3_1);
+    // println!("c.j offset_5=0b{:01b}", offset_5);
+    // println!("c.j offset=0b{:032b}", offset);
+    inst_jal(0, sign_ext(offset as u64, 11) as u32)
 }
 
 #[test]
-#[ignore]
 fn test_dec_c_j() {
-    assert_eq!(inst_jal(0, 2), dec_c_j(inst_c_j(2)),
-               "exp=0b{:032b}, act=0b{:032b}",
-               inst_jal(0, 2), dec_c_j(inst_c_j(2)));
+    assert_eq!(inst_jal(0, 2), dec_c_j(inst_c_j(2)));
     assert_eq!(inst_jal(0, -2i32 as u32), dec_c_j(inst_c_j(-2i16 as u16)));
 }
 
