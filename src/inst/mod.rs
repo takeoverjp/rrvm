@@ -668,7 +668,7 @@ pub fn decompress(c_inst: u16) -> u32 {
     } else if is_c_j (c_inst) {
         dec_c_j (c_inst)
     } else {
-        unimplemented!("c_inst = 0x{:04x}", c_inst)
+        unimplemented!("c_inst = 0x{:016b}", c_inst)
     }
 }
 
