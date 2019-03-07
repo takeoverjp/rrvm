@@ -373,6 +373,28 @@ fn test_dec_c_mv() {
     assert_eq!(inst_add( 2, 0, 31),  dec_c_mv(inst_c_mv( 2, 31)));
 }
 
+/// Returns instruction code of `c.li`.
+///
+/// ```asm
+/// c.li rd, imm
+/// ```
+pub fn inst_c_li(rd:usize, imm:u8) -> u16 {
+    inst_ci(FUNCT3_C_LI, rd as u8, imm, OP_C1)
+}
+
+/// Returns whether `c.li` or not.
+pub fn is_c_li(inst:u16) -> bool {
+    let funct3 = extract16(inst, 13, 3);
+    let opcode = extract16(inst, 0, 2);
+    (funct3 == FUNCT3_C_LI) && (opcode == OP_C1)
+}
+
+#[test]
+fn test_is_c_li() {
+    assert_eq!(true,  is_c_li(inst_c_li(2, 1)));
+    assert_eq!(false, is_c_li(inst_c_add(2, 1)));
+    assert_eq!(false, is_c_li(inst_c_mv(2, 1)));
+}
 /// Returns instruction code of `c.add`.
 ///
 /// ```asm
