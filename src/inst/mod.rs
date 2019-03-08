@@ -395,6 +395,24 @@ fn test_is_c_li() {
     assert_eq!(false, is_c_li(inst_c_add(2, 1)));
     assert_eq!(false, is_c_li(inst_c_mv(2, 1)));
 }
+
+/// Decompresses `c.li rd, rs2` to `addi rd, x0, imm`.
+pub fn dec_c_li(inst:u16) -> u32 {
+    let rd  = extract16(inst, 7, 5) as usize;
+    let imm_5 = extract16(inst, 12, 1);
+    let imm_4_0 = extract16(inst, 2, 5);
+    let imm = imm_5 << 5 | imm_4_0;
+
+    inst_addi(rd, 0, imm)
+}
+
+#[test]
+fn test_dec_c_li() {
+    assert_eq!(inst_addi( 2, 0,  1),  dec_c_li(inst_c_li( 2,  1)));
+    assert_eq!(inst_addi(31, 0,  1),  dec_c_li(inst_c_li(31,  1)));
+    assert_eq!(inst_addi( 2, 0, 31),  dec_c_li(inst_c_li( 2, 31)));
+}
+
 /// Returns instruction code of `c.add`.
 ///
 /// ```asm
