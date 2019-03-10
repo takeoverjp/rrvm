@@ -482,15 +482,16 @@ pub fn dec_c_addi(inst:u16) -> u32 {
     let imm_lo = extract16(inst, 2, 5);
     let imm = (imm_hi << 5) | imm_lo;
 
-    println!("c.addi rd={} imm={:x}", rd, imm);
-    inst_addi(rd, rd, imm)
+    info!("c.addi {} {}", ABI_NAME[rd], sign_ext(imm as u64, 6));
+
+    inst_addi(rd, rd, sign_ext(imm as u64, 6) as u16)
 }
 
 #[test]
 fn test_dec_c_addi() {
     assert_eq!(inst_addi(2, 2, 1), dec_c_addi(inst_c_addi(2, 1)));
     assert_eq!(inst_addi(31,31, 1), dec_c_addi(inst_c_addi(31, 1)));
-    assert_eq!(inst_addi(2, 2, 0b11_1111), dec_c_addi(inst_c_addi(2, 0b11_1111)));
+    assert_eq!(inst_addi(2, 2, -1i16 as u16), dec_c_addi(inst_c_addi(2, -1i16 as u8)));
 }
 
 /// Returns instruction code of `c.addi16sp`.
