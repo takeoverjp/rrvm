@@ -584,7 +584,7 @@ fn test_is_c_addi4spn() {
     assert_eq!(false, is_c_addi4spn(inst_c_mv(2, 1)));
 }
 
-/// Decompresses `c.addi4spn rd', uimm` to `addi rd, sp, imm*4`.
+/// Decompresses `c.addi4spn rd', uimm` to `addi rd, sp, uimm*4`.
 pub fn dec_c_addi4spn(inst:u16) -> u32 {
     let rd  = (extract16(inst, 2, 3) as usize) + 8;
     let uimm_9_6 = extract16(inst,  7, 4);
@@ -596,7 +596,8 @@ pub fn dec_c_addi4spn(inst:u16) -> u32 {
         | (uimm_3 << 3)
         | (uimm_2 << 2);
 
-    println!("c.addi4spn sp uimm={:x}", uimm);
+    info!("c.addi4spn {}", uimm);
+
     inst_addi(rd, 2, uimm)
 }
 
