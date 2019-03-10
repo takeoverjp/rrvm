@@ -696,7 +696,6 @@ fn test_dec_c_j() {
 }
 
 pub fn decompress(c_inst: u16) -> u32 {
-    println!("decompress");
     if is_c_mv (c_inst) {
         dec_c_mv (c_inst)
     } else if is_c_li (c_inst) {
