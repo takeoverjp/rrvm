@@ -686,6 +686,9 @@ pub fn dec_c_j(inst:u16) -> u32 {
     // println!("c.j offset_3_1=0b{:03b}", offset_3_1);
     // println!("c.j offset_5=0b{:01b}", offset_5);
     // println!("c.j offset=0b{:032b}", offset);
+
+    info!("c.j {}", sign_ext(offset as u64, 11) as i64);
+
     inst_jal(0, sign_ext(offset as u64, 11) as u32)
 }
 
