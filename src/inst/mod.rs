@@ -541,14 +541,15 @@ pub fn dec_c_addi16sp(inst:u16) -> u32 {
         | (imm_5 << 5)
         | (imm_4 << 4);
 
-    println!("c.addi16sp sp imm={:x}", imm);
-    inst_addi(rd, rd, imm)
+    info!("c.addi16sp {}", sign_ext(imm as u64, 9) as i64);
+
+    inst_addi(rd, rd, sign_ext(imm as u64, 9) as u16)
 }
 
 #[test]
 fn test_dec_c_addi16sp() {
     assert_eq!(inst_addi(2, 2, 1*16), dec_c_addi16sp(inst_c_addi16sp(2, 1)));
-    assert_eq!(inst_addi(2, 2, 0b11_1111*16), dec_c_addi16sp(inst_c_addi16sp(2, 0b11_1111)));
+    assert_eq!(inst_addi(2, 2, -16i16 as u16), dec_c_addi16sp(inst_c_addi16sp(2, 0b11_1111)));
 }
 
 /// Returns instruction code of `c.addi4spn`.
