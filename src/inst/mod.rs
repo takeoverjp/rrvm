@@ -405,6 +405,8 @@ pub fn dec_c_li(inst:u16) -> u32 {
     let imm_4_0 = extract16(inst, 2, 5);
     let imm = imm_5 << 5 | imm_4_0;
 
+    info!("c.li {},{}", ABI_NAME[rd], ABI_NAME[rs2]);
+
     inst_addi(rd, 0, imm)
 }
 
