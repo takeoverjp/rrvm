@@ -444,6 +444,8 @@ pub fn dec_c_add(inst:u16) -> u32 {
     let rd  = extract16(inst, 7, 5) as usize;
     let rs2 = extract16(inst, 2, 5) as usize;
 
+    info!("c.add {},{}", ABI_NAME[rd], ABI_NAME[rs2]);
+
     inst_add(rd, rd, rs2)
 }
 
