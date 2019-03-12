@@ -398,14 +398,14 @@ fn test_is_c_li() {
     assert_eq!(false, is_c_li(inst_c_mv(2, 1)));
 }
 
-/// Decompresses `c.li rd, rs2` to `addi rd, x0, imm`.
+/// Decompresses `c.li rd imm` to `addi rd, x0, imm`.
 pub fn dec_c_li(inst:u16) -> u32 {
     let rd  = extract16(inst, 7, 5) as usize;
     let imm_5 = extract16(inst, 12, 1);
     let imm_4_0 = extract16(inst, 2, 5);
     let imm = imm_5 << 5 | imm_4_0;
 
-    info!("c.li {},{}", ABI_NAME[rd], ABI_NAME[rs2]);
+    info!("c.li {},{}", ABI_NAME[rd], imm);
 
     inst_addi(rd, 0, imm)
 }
