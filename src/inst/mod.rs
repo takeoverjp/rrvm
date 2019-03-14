@@ -143,6 +143,14 @@ fn inst_ciw(_funct3:u16, _imm:u8, _rd:u8, _opcode:u16) -> u16 {
         | (opcode as u16);
 }
 
+fn inst_cs(_funct3:u16, _rs1:u8, __rs2:u8, _imm:u8, _opcode:u16) -> u16 {
+    let funct3 = _funct3 & ((1 <<  4) - 1);
+    let opcode = _opcode & ((1 <<  2) - 1);
+
+    ((funct3 as u16)   << (8 + 3 + 2))
+        | (opcode as u16)
+}
+
 fn inst_cj(_funct3:u16, _target:u16, _opcode:u16) -> u16 {
     let funct3 = _funct3 & ((1 <<  4) - 1);
     let target = _target & ((1 << 11) - 1);
@@ -373,6 +381,29 @@ fn test_dec_c_mv() {
     assert_eq!(inst_add( 2, 0,  1),  dec_c_mv(inst_c_mv( 2,  1)));
     assert_eq!(inst_add(31, 0,  1),  dec_c_mv(inst_c_mv(31,  1)));
     assert_eq!(inst_add( 2, 0, 31),  dec_c_mv(inst_c_mv( 2, 31)));
+}
+
+/// Returns instruction code of `c.sw`.
+///
+/// ```asm
+/// c.sw rd, imm
+/// ```
+pub fn inst_c_sw(rs1:usize, rs2: usize, offset:u8) -> u16 {
+    inst_cs(FUNCT3_C_SW, rs1 as u8, rs2 as u8, offset, OP_C0)
+}
+
+/// Returns whether `c.sw` or not.
+pub fn is_c_sw(inst:u16) -> bool {
+    let funct3 = extract16(inst, 13, 3);
+    let opcode = extract16(inst, 0, 2);
+    (funct3 == FUNCT3_C_SW) && (opcode == OP_C0)
+}
+
+#[test]
+fn test_is_c_sw() {
+    assert_eq!(true,  is_c_sw(inst_c_sw(2, 1, 3)));
+    assert_eq!(false, is_c_sw(inst_c_add(2, 1)));
+    assert_eq!(false, is_c_sw(inst_c_mv(2, 1)));
 }
 
 /// Returns instruction code of `c.li`.
