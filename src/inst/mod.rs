@@ -143,11 +143,15 @@ fn inst_ciw(_funct3:u16, _imm:u8, _rd:u8, _opcode:u16) -> u16 {
         | (opcode as u16);
 }
 
-fn inst_cs(_funct3:u16, _rs1:u8, __rs2:u8, _imm:u8, _opcode:u16) -> u16 {
+fn inst_cs(_funct3:u16, _rs1:u8, _rs2:u8, _imm:u8, _opcode:u16) -> u16 {
     let funct3 = _funct3 & ((1 <<  4) - 1);
+    let rs1     = _rs1   & ((1 <<  3) - 1);
+    let rs2     = _rs2   & ((1 <<  3) - 1);
     let opcode = _opcode & ((1 <<  2) - 1);
 
     ((funct3 as u16)   << (8 + 3 + 2))
+        | ((rs1 as u16) << 2 + 3 + 2)
+        | ((rs2 as u16) << 2)
         | (opcode as u16)
 }
 
