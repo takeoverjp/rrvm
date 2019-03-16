@@ -90,6 +90,21 @@ fn inst_i_shamt(_l_or_a:u8, _shamt:u8, _rs1:u8, _funct3:u32, _rd:u8, _opcode:u32
         | (opcode as u32);
 }
 
+fn inst_i_store(_imm:u16, _rs2:u8, _rs1:u8, _funct3:u32, _opcode:u32) -> u32 {
+    let imm_11_5 = extract16(_imm, 5, 7);
+    let imm_4_0  = extract16(_imm, 0, 5);
+    let rs2      = _rs2     & ((1 <<  5) - 1);
+    let rs1      = _rs1    & ((1 <<  5) - 1);
+    let funct3   = _funct3 & ((1 <<  3) - 1);
+    let opcode   = (_opcode << 2 | 0b11) & ((1 <<  7) - 1);
+    return ((imm_11_5 as u32) << (5 + 5 + 3 + 5 + 7))
+        | ((rs2 as u32)       << (5 + 3 + 5 + 7))
+        | ((rs1 as u32)       << (3 + 5 + 7))
+        | ((funct3 as u32)    << (5 + 7))
+        | ((imm_4_0 as u32)   << 7)
+        | (opcode as u32);
+}
+
 fn inst_u(_imm:u32, _rd:u8, _opcode:u32) -> u32 {
     let imm    = _imm    & ((1 << 20) - 1);
     let rd     = _rd     & ((1 <<  5) - 1);
@@ -225,6 +240,15 @@ pub fn inst_ld(rd:usize, offset: u16, rs1:usize) -> u32 {
 /// ```
 pub fn inst_lbu(rd:usize, offset: u16, rs1:usize) -> u32 {
     inst_i(offset, rs1 as u8, FUNCT3_LBU, rd as u8, LOAD)
+}
+
+/// Returns instruction code of `lw`.
+///
+/// ```asm
+/// sw rs2, offset(rs1)
+/// ```
+pub fn inst_sw(rs2:usize, offset: u16, rs1:usize) -> u32 {
+    inst_i_store(offset, rs2 as u8, rs1 as u8, FUNCT3_LW, STORE)
 }
 
 /// Returns instruction code of `addi`.

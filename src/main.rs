@@ -1119,6 +1119,70 @@ mod tests {
     }
 
     #[test]
+    fn test_sw() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        {
+            let elf = Elf::new(&vec);
+            let mut mem = Memory::new(&mut vec, &elf);
+            // sw r2, 3(r1)
+            let inst: u32 = inst_sw(2, 3, 1);
+            reg.x[1] = 0x1;
+            reg.x[2] = 0x2;
+
+            handle_store(&mut mem, &mut reg, inst);
+        }
+
+        assert_eq!(0x02, vec[4]);
+        assert_eq!(0x00, vec[5]);
+        assert_eq!(0x00, vec[6]);
+        assert_eq!(0x00, vec[7]);
+    }
+
+    #[test]
+    fn test_sw_negative_value() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 0xfe, 0xff, 0xff, 0xff];
+        {
+            let elf = Elf::new(&vec);
+            let mut mem = Memory::new(&mut vec, &elf);
+            // sw r2, 3(r1)
+            let inst: u32 = inst_sw(2, 3, 1);
+            reg.x[1] = 0x1;
+            reg.x[2] = -2i64 as u64;
+
+            handle_store(&mut mem, &mut reg, inst);
+        }
+
+        assert_eq!(0xfe, vec[4]);
+        assert_eq!(0xff, vec[5]);
+        assert_eq!(0xff, vec[6]);
+        assert_eq!(0xff, vec[7]);
+    }
+
+    #[test]
+    fn test_sw_negative_offset() {
+        let mut reg = RegisterFile::new();
+        let mut vec: Vec<u8> = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        {
+            let elf = Elf::new(&vec);
+            let mut mem = Memory::new(&mut vec, &elf);
+            // sw r2, -3(r1)
+            let inst: u32 = inst_sw(2, -3i16 as u16, 1);
+
+            reg.x[1] = 7;
+            reg.x[2] = 2i64 as u64;
+
+            handle_store(&mut mem, &mut reg, inst);
+        }
+
+        assert_eq!(0x02, vec[4]);
+        assert_eq!(0x00, vec[5]);
+        assert_eq!(0x00, vec[6]);
+        assert_eq!(0x00, vec[7]);
+    }
+
+    #[test]
     fn test_addi() {
         let mut reg = RegisterFile::new();
         let inst: u32 = inst_addi(2, 1, 7);
