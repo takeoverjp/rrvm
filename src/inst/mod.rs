@@ -1,3 +1,6 @@
+extern crate log;
+extern crate env_logger;
+
 pub mod encodings;
 pub use encodings::*;
 
@@ -35,6 +38,16 @@ pub fn sign_ext(val: u64, size: u8) -> i64 {
     }
 
     ret
+}
+
+#[cfg(test)]
+fn init_log() {
+    let env = env_logger::Env::default()
+        .filter_or(env_logger::DEFAULT_FILTER_ENV, "debug");
+    env_logger::Builder::from_env(env)
+        .is_test(true)
+        .default_format_timestamp(false)
+        .init();
 }
 
 #[test]
