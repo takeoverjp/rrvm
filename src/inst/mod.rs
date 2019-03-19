@@ -814,6 +814,8 @@ fn test_dec_c_j() {
 pub fn decompress(c_inst: u16) -> u32 {
     if is_c_mv (c_inst) {
         dec_c_mv (c_inst)
+    } else if is_c_sw (c_inst) {
+        dec_c_sw (c_inst)
     } else if is_c_li (c_inst) {
         dec_c_li (c_inst)
     } else if is_c_add (c_inst) {
