@@ -173,12 +173,18 @@ fn inst_ciw(_funct3:u16, _imm:u8, _rd:u8, _opcode:u16) -> u16 {
 
 fn inst_cs(_funct3:u16, _rs1:u8, _rs2:u8, _imm:u8, _opcode:u16) -> u16 {
     let funct3 = _funct3 & ((1 <<  4) - 1);
+    let offset_2 = extract8(_imm, 0, 1);
+    let offset_5_3 = extract8(_imm, 1, 3);
+    let offset_6 = extract8(_imm, 2, 1);
     let rs1     = _rs1   & ((1 <<  3) - 1);
     let rs2     = _rs2   & ((1 <<  3) - 1);
     let opcode = _opcode & ((1 <<  2) - 1);
 
-    ((funct3 as u16)   << (8 + 3 + 2))
-        | ((rs1 as u16) << 2 + 3 + 2)
+    ((funct3 as u16)   << (3 + 3 + 1 + 1 + 3 + 2))
+        | ((offset_5_3 as u16) << (3 + 1 + 1 + 3 + 2))
+        | ((rs1 as u16) << (1 + 1 + 3 + 2))
+        | ((offset_2 as u16) << (1 + 3 + 2))
+        | ((offset_6 as u16) << (3 + 2))
         | ((rs2 as u16) << 2)
         | (opcode as u16)
 }
@@ -427,9 +433,9 @@ fn test_dec_c_mv() {
 /// Returns instruction code of `c.sw`.
 ///
 /// ```asm
-/// c.sw rd, imm
+/// c.sw rs2, (offset*4)(rs1)
 /// ```
-pub fn inst_c_sw(rs1:usize, rs2: usize, offset:u8) -> u16 {
+pub fn inst_c_sw(rs2: usize, offset:u8, rs1:usize) -> u16 {
     inst_cs(FUNCT3_C_SW, rs1 as u8, rs2 as u8, offset, OP_C0)
 }
 
@@ -445,6 +451,31 @@ fn test_is_c_sw() {
     assert_eq!(true,  is_c_sw(inst_c_sw(2, 1, 3)));
     assert_eq!(false, is_c_sw(inst_c_add(2, 1)));
     assert_eq!(false, is_c_sw(inst_c_mv(2, 1)));
+}
+
+/// Decompresses `c.sw rs2, offset(rs1)` to `sw rs2, (offset*4)(rs1)`.
+pub fn dec_c_sw(inst:u16) -> u32 {
+    let rs1 = extract16(inst, 7, 3) as usize;
+    let rs2 = extract16(inst, 2, 3) as usize;
+    let offset_6   = extract16(inst, 5, 1);
+    let offset_2   = extract16(inst, 6, 1);
+    let offset_5_3 = extract16(inst, 10, 3);
+    let offset = (offset_6 << 6)
+        | (offset_5_3 << 3)
+        | (offset_2 << 2);
+
+    info!("c.sw {}, {}({})", ABI_NAME[rs2], offset, ABI_NAME[rs1]);
+
+    inst_sw(rs2, offset, rs1)
+}
+
+#[test]
+fn test_dec_c_sw() {
+    init_log();
+
+    assert_eq!(inst_sw(2,   4, 3), dec_c_sw(inst_c_sw(2,  1, 3)));
+    assert_eq!(inst_sw(7,   4, 3), dec_c_sw(inst_c_sw(7,  1, 3)));
+    assert_eq!(inst_sw(2, 124, 3), dec_c_sw(inst_c_sw(2, 31, 3)));
 }
 
 /// Returns instruction code of `c.li`.
