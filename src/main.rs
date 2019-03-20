@@ -795,6 +795,7 @@ fn main() {
 
     let elf = Elf::new(&vec);
     reg.pc = if elf.is_elf() {
+        debug!("{}", elf);
         elf.entry_point_address()
     } else {
         args.offset
