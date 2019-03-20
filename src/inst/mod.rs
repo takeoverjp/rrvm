@@ -453,7 +453,10 @@ fn test_is_c_sw() {
     assert_eq!(false, is_c_sw(inst_c_mv(2, 1)));
 }
 
-/// Decompresses `c.sw rs2, offset(rs1)` to `sw rs2, (offset*4)(rs1)`.
+/// Decompresses `c.sw rs2', offset'(rs1')` to `sw rs2, offset(rs1)`.
+/// offset = offset' * 4
+/// rs1 = rs1' + 8
+/// rs2 = rs2' + 8
 pub fn dec_c_sw(inst:u16) -> u32 {
     let rs1 = (extract16(inst, 7, 3) + 8) as usize;
     let rs2 = (extract16(inst, 2, 3) + 8) as usize;
