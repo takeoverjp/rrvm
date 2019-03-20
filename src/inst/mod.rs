@@ -455,8 +455,8 @@ fn test_is_c_sw() {
 
 /// Decompresses `c.sw rs2, offset(rs1)` to `sw rs2, (offset*4)(rs1)`.
 pub fn dec_c_sw(inst:u16) -> u32 {
-    let rs1 = extract16(inst, 7, 3) as usize;
-    let rs2 = extract16(inst, 2, 3) as usize;
+    let rs1 = (extract16(inst, 7, 3) + 8) as usize;
+    let rs2 = (extract16(inst, 2, 3) + 8) as usize;
     let offset_6   = extract16(inst, 5, 1);
     let offset_2   = extract16(inst, 6, 1);
     let offset_5_3 = extract16(inst, 10, 3);
@@ -473,9 +473,9 @@ pub fn dec_c_sw(inst:u16) -> u32 {
 fn test_dec_c_sw() {
     init_log();
 
-    assert_eq!(inst_sw(2,   4, 3), dec_c_sw(inst_c_sw(2,  1, 3)));
-    assert_eq!(inst_sw(7,   4, 3), dec_c_sw(inst_c_sw(7,  1, 3)));
-    assert_eq!(inst_sw(2, 124, 3), dec_c_sw(inst_c_sw(2, 31, 3)));
+    assert_eq!(inst_sw(10,   4, 11), dec_c_sw(inst_c_sw(2,  1, 3)));
+    assert_eq!(inst_sw(15,   4, 11), dec_c_sw(inst_c_sw(7,  1, 3)));
+    assert_eq!(inst_sw(10, 124, 11), dec_c_sw(inst_c_sw(2, 31, 3)));
 }
 
 /// Returns instruction code of `c.li`.
