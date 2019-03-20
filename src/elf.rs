@@ -63,7 +63,7 @@ impl Elf {
     pub fn entry_point_offset(&self) -> Option<u64> {
         for sec in &self.sec {
             if sec.is_executable() {
-                return Some(sec.sh_offset);
+                return Some(sec.sh_offset + (self.entry_point_address() - sec.sh_addr));
             }
         }
 
