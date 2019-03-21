@@ -792,6 +792,7 @@ fn main() {
     let mut reg = RegisterFile::new();
     let map = get_memmap(&args.prog);
     let mut vec = map.to_vec();
+    vec.resize(args.memory, 0);
 
     let elf = Elf::new(&vec);
     reg.pc = if elf.is_elf() {
